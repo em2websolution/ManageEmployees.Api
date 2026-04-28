@@ -131,7 +131,7 @@ No manual migrations required.
 dotnet test
 ```
 
-**95 tests** (73 unit + 22 integration), all passing:
+**89 tests** (67 unit + 22 integration), all passing:
 
 ### Unit Tests (ManageEmployees.UnitTests)
 
@@ -140,12 +140,12 @@ dotnet test
 | API | TasksControllerTests | 12 | HTTP responses, JWT claim extraction, error handling |
 | API | LoginControllerTests | 16 | SignIn/SignUp/Update/Delete/SignOut/ListAll responses |
 | Services | TaskServiceTests | 10 | CRUD, status validation, not-found errors |
-| Services | UserServiceTests | 11 | Sign-in, sign-up, update, delete, list |
+| Services | UserServiceTests | 15 | Sign-in, sign-up, update, delete, list |
 | Services | AuthServiceTests | 5 | Token generation, refresh swap, removal |
-| Domain | ConstantsTests | 3 | Roles, task statuses, table names |
+| Domain | ConstantsTests | 2 | Role names, task statuses |
 | Domain | SignInRequestTests | 4 | DTO field validation |
-| Domain | ExceptionsTests | 5 | BusinessException, extension methods |
-| | **Subtotal** | **73** | |
+| Domain | ExceptionsTests | 3 | BusinessException constructors, trace ID |
+| | **Subtotal** | **67** | |
 
 ### Integration Tests (ManageEmployees.IntegrationTests)
 
@@ -156,7 +156,7 @@ dotnet test
 | Data Access | UserRepositoryTests | 6 | Roles join, ordering, nullable fields, empty list |
 | | **Subtotal** | **22** | |
 
-| | **Total** | **95** | |
+| | **Total** | **89** | |
 
 ---
 

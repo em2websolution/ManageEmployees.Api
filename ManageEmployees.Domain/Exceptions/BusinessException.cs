@@ -1,9 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ManageEmployees.Domain.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using ManageEmployees.Domain.Models;
 using System.Diagnostics;
-using System.Net;
-using System.Security.Authentication;
 
 namespace ManageEmployees.Domain.Exceptions
 {
@@ -28,35 +24,5 @@ namespace ManageEmployees.Domain.Exceptions
         {
             TraceId = Activity.Current?.Id;
         }
-    }
-
-    public static class ExceptionExtensions
-    {
-        public static ProblemDetails ToProblemDetails(this Exception e)
-        {
-            return new ProblemDetails()
-            {
-                Status = (int)GetErrorCode(e.InnerException ?? e),
-                Title = e.Message
-            };
-        }
-
-        private static HttpStatusCode GetErrorCode(Exception e)
-        {
-            switch (e)
-            {
-                case ValidationException _:
-                case FormatException _:
-                case BusinessException _:
-                    return HttpStatusCode.BadRequest;
-                case AuthenticationException _:
-                    return HttpStatusCode.Forbidden;
-                case NotImplementedException _:
-                    return HttpStatusCode.NotImplemented;
-                default:
-                    return HttpStatusCode.InternalServerError;
-            }
-        }
-
     }
 }

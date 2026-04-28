@@ -1,17 +1,5 @@
 ﻿namespace ManageEmployees.Domain;
 
-public static class TableName
-{
-    public static string Roles = "Roles";
-}
-
-public static class TableColumn
-{
-    public static string Id = "Id";
-    public static string Name = "Name";
-    public static string NormalizedName = "NormalizedName";
-}
-
 public static class RoleName
 {
     public static string Administrator = "Administrator";

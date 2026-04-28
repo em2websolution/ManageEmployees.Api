@@ -6,20 +6,6 @@ namespace ManageEmployees.UnitTests;
 public class ConstantsTests
 {
     [Test]
-    public void TableName_Roles_ShouldBeCorrect()
-    {
-        Assert.That(TableName.Roles, Is.EqualTo("Roles"));
-    }
-
-    [Test]
-    public void TableColumn_ShouldContainExpectedValues()
-    {
-        Assert.That(TableColumn.Id, Is.EqualTo("Id"));
-        Assert.That(TableColumn.Name, Is.EqualTo("Name"));
-        Assert.That(TableColumn.NormalizedName, Is.EqualTo("NormalizedName"));
-    }
-
-    [Test]
     public void RoleName_ShouldContainExpectedValues()
     {
         Assert.That(RoleName.Administrator, Is.EqualTo("Administrator"));
