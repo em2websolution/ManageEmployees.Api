@@ -25,11 +25,9 @@ namespace ManageEmployees.Domain.DTO
         [Required, MaxLength(256, ErrorMessage = "Document Number cannot exceed 256 characters.")]
         public string DocNumber { get; set; } = null!;
 
-        [StringLength(450, ErrorMessage = "Manager ID must be a valid identifier.")]
-        public string? ManagerId { get; set; }
-
         [Required(ErrorMessage = "Role is required.")]
         public string Role { get; set; } = null!;
+
         public string? PhoneNumber { get; set; }
     }
 }

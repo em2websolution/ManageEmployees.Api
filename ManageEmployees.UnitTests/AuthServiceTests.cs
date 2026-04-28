@@ -62,10 +62,6 @@ public class AuthServiceTests
     {
         // Arrange
         var roles = new List<string> { "Role1", "Role2" };
-        var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.UserData, _testUser.Id)
-    };
 
         _userManagerMock.Setup(m => m.FindByNameAsync(_testUser.UserName))
             .ReturnsAsync(_testUser);
@@ -73,11 +69,8 @@ public class AuthServiceTests
         _userManagerMock.Setup(m => m.GetRolesAsync(_testUser))
             .ReturnsAsync(roles);
 
-        _userManagerMock.Setup(m => m.GetClaimsAsync(_testUser))
-            .ReturnsAsync(claims);
-
-        _refreshTokenRepositoryMock.Setup(r => r.Create(It.IsAny<RefreshToken>()));
-        _refreshTokenRepositoryMock.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask);
+        _refreshTokenRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<RefreshToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         var token = await _authService.GenerateTokenAsync(_testUser.UserName);
@@ -88,15 +81,14 @@ public class AuthServiceTests
         token.RefreshToken.Should().NotBeNullOrEmpty();
 
         _userManagerMock.Verify(m => m.FindByNameAsync(_testUser.UserName), Times.Once);
-        _refreshTokenRepositoryMock.Verify(r => r.Create(It.IsAny<RefreshToken>()), Times.Once);
-        _refreshTokenRepositoryMock.Verify(r => r.SaveAsync(), Times.Once);
+        _refreshTokenRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<RefreshToken>()), Times.Once);
     }
 
     [Test]
     public async Task RemoveRefreshTokenAsync_ShouldReturnFalse_WhenTokenNotFound()
     {
         // Arrange
-        _refreshTokenRepositoryMock.Setup(r => r.GetRefreshTokenByUserId(_testUser.Id))
+        _refreshTokenRepositoryMock.Setup(r => r.GetByUserIdAsync(_testUser.Id))
             .ReturnsAsync((RefreshToken)null);
 
         // Act
@@ -105,8 +97,8 @@ public class AuthServiceTests
         // Assert
         result.Should().BeFalse();
 
-        _refreshTokenRepositoryMock.Verify(r => r.GetRefreshTokenByUserId(_testUser.Id), Times.Once);
-        _refreshTokenRepositoryMock.Verify(r => r.Delete(It.IsAny<RefreshToken>()), Times.Never);
+        _refreshTokenRepositoryMock.Verify(r => r.GetByUserIdAsync(_testUser.Id), Times.Once);
+        _refreshTokenRepositoryMock.Verify(r => r.DeleteAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Test]
@@ -117,6 +109,7 @@ public class AuthServiceTests
         var refreshToken = "valid-refresh-token";
         var dbToken = new RefreshToken
         {
+            Id = Guid.NewGuid(),
             Token = refreshToken,
             UserId = _testUser.Id
         };
@@ -124,17 +117,17 @@ public class AuthServiceTests
         _userManagerMock.Setup(m => m.FindByNameAsync(username))
             .ReturnsAsync(_testUser);
 
-        _refreshTokenRepositoryMock.Setup(r => r.GetRefreshTokenByUserId(_testUser.Id))
+        _refreshTokenRepositoryMock.Setup(r => r.GetByUserIdAsync(_testUser.Id))
             .ReturnsAsync(dbToken);
 
-        _refreshTokenRepositoryMock.Setup(r => r.Delete(dbToken));
-        _refreshTokenRepositoryMock.Setup(r => r.SaveAsync()).Returns(Task.CompletedTask);
+        _refreshTokenRepositoryMock.Setup(r => r.DeleteAsync(dbToken.Id))
+            .Returns(Task.CompletedTask);
+
+        _refreshTokenRepositoryMock.Setup(r => r.CreateAsync(It.IsAny<RefreshToken>()))
+            .Returns(Task.CompletedTask);
 
         _userManagerMock.Setup(m => m.GetRolesAsync(_testUser))
             .ReturnsAsync(new List<string> { "User" });
-
-        _userManagerMock.Setup(m => m.GetClaimsAsync(_testUser))
-            .ReturnsAsync(new List<Claim>());
 
         // Act
         var token = await _authService.RefreshTokenSwapAsync(username, refreshToken);
@@ -144,9 +137,8 @@ public class AuthServiceTests
         token.AccessToken.Should().NotBeNullOrEmpty();
         token.RefreshToken.Should().NotBeNullOrEmpty();
 
-        _refreshTokenRepositoryMock.Verify(r => r.GetRefreshTokenByUserId(_testUser.Id), Times.AtLeastOnce);
-        _refreshTokenRepositoryMock.Verify(r => r.Delete(dbToken), Times.AtLeastOnce);
-        _refreshTokenRepositoryMock.Verify(r => r.SaveAsync(), Times.AtLeastOnce);
+        _refreshTokenRepositoryMock.Verify(r => r.GetByUserIdAsync(_testUser.Id), Times.AtLeastOnce);
+        _refreshTokenRepositoryMock.Verify(r => r.DeleteAsync(dbToken.Id), Times.AtLeastOnce);
     }
 
     [Test]
@@ -157,6 +149,7 @@ public class AuthServiceTests
         var refreshToken = "invalid-refresh-token";
         var dbToken = new RefreshToken
         {
+            Id = Guid.NewGuid(),
             Token = "valid-refresh-token",
             UserId = _testUser.Id
         };
@@ -164,7 +157,7 @@ public class AuthServiceTests
         _userManagerMock.Setup(m => m.FindByNameAsync(username))
             .ReturnsAsync(_testUser);
 
-        _refreshTokenRepositoryMock.Setup(r => r.GetRefreshTokenByUserId(_testUser.Id))
+        _refreshTokenRepositoryMock.Setup(r => r.GetByUserIdAsync(_testUser.Id))
             .ReturnsAsync(dbToken);
 
         // Act
@@ -185,7 +178,7 @@ public class AuthServiceTests
         _userManagerMock.Setup(m => m.FindByNameAsync(username))
             .ReturnsAsync(_testUser);
 
-        _refreshTokenRepositoryMock.Setup(r => r.GetRefreshTokenByUserId(_testUser.Id))
+        _refreshTokenRepositoryMock.Setup(r => r.GetByUserIdAsync(_testUser.Id))
             .Throws(new Exception("Database error"));
 
         // Act
@@ -195,5 +188,4 @@ public class AuthServiceTests
         await act.Should().ThrowAsync<Exception>()
             .WithMessage("Database error");
     }
-
 }

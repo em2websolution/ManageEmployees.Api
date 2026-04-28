@@ -1,16 +1,17 @@
 ﻿using ManageEmployees.Domain.DTO;
 using ManageEmployees.Domain.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using System.Security.Claims;
 
 namespace ManageEmployees.Api.Controllers;
 
 /// <summary>
-/// Controller responsável por fornecer endpoints para operações relacionadas ao login.
+/// Controller for authentication and user management operations.
 /// </summary>
 [ApiController]
 [Route("[controller]")]
+[Authorize]
 public class LoginController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -24,15 +25,11 @@ public class LoginController : ControllerBase
     }
 
     /// <summary>
-    /// Sign into the application
+    /// Sign into the application.
     /// </summary>
-    /// <param name="signInRequest">Model containing necessary data to sign into the application</param>
-    /// <returns>
-    /// In case of success: Token is stored in the cookies and a OK Status Code
-    /// In case of failure: returns BadRequest
-    /// </returns>
     [HttpPost]
     [Route("SignIn")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignInAsync([FromBody] SignInRequest signInRequest)
@@ -40,7 +37,6 @@ public class LoginController : ControllerBase
         try
         {
             var credentials = new NetworkCredential(signInRequest.UserName, signInRequest.Password);
-
             var token = await _userService.SignInAsync(credentials);
 
             if (token == null)
@@ -50,63 +46,38 @@ public class LoginController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new
-            {
-                Error = "An error occurred while signing in.",
-                Details = ex.Message
-            });
+            return BadRequest(new { Error = "An error occurred while signing in.", Details = ex.Message });
         }
     }
 
     /// <summary>
-    /// Create a new user
+    /// Create a new user.
     /// </summary>
-    /// <param name="createUser">Input data containing new member data</param>
-    /// <returns>
-    /// In case of success: Token is stored in the cookies
-    /// In case of failure: returns BadRequest
-    /// </returns>
     [HttpPost]
     [Route("SignUp")]
+    [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignUpAsync([FromBody] CreateUser createUser)
     {
         try
         {
-            var currentUser = await _userService.GetCurrentUserAsync(User.FindFirst(ClaimTypes.UserData)?.Value!);
+            var result = await _userService.SignUpAsync(createUser);
 
-            if (!await _userService.CanCreateUserAsync(currentUser, createUser.Role))
-                return BadRequest($"You do not have permission to create a user with the role '{createUser.Role}'.");
-
-            var credentials = new NetworkCredential(createUser.Email.ToLower(), createUser.Password);
-
-            var isTokenCreated = await _userService.SignUpAsync(credentials, createUser);
-
-            if (string.IsNullOrEmpty(isTokenCreated))
+            if (string.IsNullOrEmpty(result))
                 return BadRequest("User creation failed or user already exists!");
 
-            return Ok(new { Message = "User created successfully!", ConfirmationToken = isTokenCreated });
+            return Ok(new { Message = result });
         }
         catch (Exception ex)
         {
-            return BadRequest(new
-            {
-                Error = "An error occurred while creating the user.",
-                Details = ex.Message
-            });
+            return BadRequest(new { Error = "An error occurred while creating the user.", Details = ex.Message });
         }
     }
 
     /// <summary>
-    /// Update user
+    /// Update user.
     /// </summary>
-    /// <param name="userId">Input data containing user Ida</param>
-    /// <param name="updateUser">Input data containing new member data</param>
-    /// <returns>
-    /// In case of success: Update the user
-    /// In case of failure: returns BadRequest
-    /// </returns>
     [HttpPut]
     [Route("{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -124,22 +95,13 @@ public class LoginController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new
-            {
-                Error = "An error occurred while updating the user.",
-                Details = ex.Message
-            });
+            return BadRequest(new { Error = "An error occurred while updating the user.", Details = ex.Message });
         }
     }
 
     /// <summary>
-    /// Delete user
+    /// Delete user.
     /// </summary>
-    /// <param name="userId">Input data containing user Ida</param>
-    /// <returns>
-    /// In case of success: Deletes the user
-    /// In case of failure: returns BadRequest
-    /// </returns>
     [HttpDelete]
     [Route("{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -157,21 +119,13 @@ public class LoginController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new
-            {
-                Error = "An error occurred while deleting the user.",
-                Details = ex.Message
-            });
+            return BadRequest(new { Error = "An error occurred while deleting the user.", Details = ex.Message });
         }
     }
 
     /// <summary>
-    /// Logout from the application
+    /// Logout from the application.
     /// </summary>
-    /// <returns>
-    /// In case of success: Token is removed from the cookies
-    /// In case of failure: returns BadRequest
-    /// </returns>
     [HttpPost]
     [Route("SignOut")]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -189,21 +143,16 @@ public class LoginController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new
-            {
-                Error = "An error occurred while signing out.",
-                Details = ex.Message
-            });
+            return BadRequest(new { Error = "An error occurred while signing out.", Details = ex.Message });
         }
     }
 
     /// <summary>
     /// Retrieve all users in the system.
     /// </summary>
-    /// <returns>List of users</returns>
     [HttpGet("ListAll")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllUsersAsync()
     {
         try

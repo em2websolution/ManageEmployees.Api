@@ -16,10 +16,9 @@ namespace ManageEmployees.Domain.DTO
         [Required, MaxLength(256)]
         public string DocNumber { get; set; } = null!;
 
-        public string? ManagerId { get; set; }
-
         [Required]
         public string Role { get; set; } = null!;
+
         public string? PhoneNumber { get; set; }
 
         [Required]

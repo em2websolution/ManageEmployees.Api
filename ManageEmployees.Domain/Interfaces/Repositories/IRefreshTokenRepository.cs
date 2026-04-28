@@ -2,8 +2,10 @@
 
 namespace ManageEmployees.Domain.Interfaces.Repositories
 {
-    public interface IRefreshTokenRepository : IRepository<RefreshToken>
+    public interface IRefreshTokenRepository
     {
-        Task<RefreshToken?> GetRefreshTokenByUserId(string id);
+        Task<RefreshToken?> GetByUserIdAsync(string userId);
+        Task CreateAsync(RefreshToken token);
+        Task DeleteAsync(Guid id);
     }
 }

@@ -1,5 +1,5 @@
 ﻿using ManageEmployees.Domain.Entities;
-using ManageEmployees.Infra.Data.Contexts;
+using ManageEmployees.Infra.Data.Identity;
 using ManageEmployees.Services.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -29,7 +29,8 @@ namespace ManageEmployees.Infra.CrossCutting.IoC.Configuration
                 options.Password.RequiredLength = 3;
                 options.Lockout.MaxFailedAccessAttempts = 5;
             })
-                .AddEntityFrameworkStores<LoginContext>()
+                .AddUserStore<UserStore>()
+                .AddRoleStore<RoleStore>()
                 .AddDefaultTokenProviders();
 
             services.AddJwtSecurity(configuration);

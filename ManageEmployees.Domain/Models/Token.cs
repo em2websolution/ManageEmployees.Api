@@ -6,5 +6,6 @@
         public string RefreshToken { get; set; } = null!;
         public string Role { get; set; } = null!;
         public string FirstName { get; set; } = null!;
+        public string UserId { get; set; } = null!;
     }
 }

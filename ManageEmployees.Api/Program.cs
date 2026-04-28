@@ -1,4 +1,5 @@
 using ManageEmployees.Infra.CrossCutting.IoC.Configuration;
+using ManageEmployees.Infra.Data;
 using ManageEmployees.Services.Settings;
 using Serilog;
 using System.Reflection;
@@ -21,15 +22,12 @@ builder.Logging.AddSerilog(logger);
 
 builder.Services.AddDependencyInjection(builder.Configuration);
 
-builder.Services.DecryptConfigurationValues(builder.Configuration);
-
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 
 builder.Services.AddIdentityConfiguration(builder.Configuration);
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 var apiVersion = builder.Configuration.GetValue<string>("ApiVersion");
@@ -41,9 +39,9 @@ builder.Services.AddSwaggerGen(opt =>
     opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description =
-                    "JWT Authorization Header - utilizado com Bearer Authentication.\r\n\r\n" +
-                    "Digite 'Bearer' [espaço] e então seu token no campo abaixo.\r\n\r\n" +
-                    "Exemplo (informar sem as aspas): 'Bearer 12345abcdef'",
+                    "JWT Authorization Header - used with Bearer Authentication.\r\n\r\n" +
+                    "Enter 'Bearer' [space] and then your token in the field below.\r\n\r\n" +
+                    "Example: 'Bearer 12345abcdef'",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -71,7 +69,6 @@ builder.Services.AddSwaggerGen(opt =>
 });
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddDbConnection(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
@@ -81,7 +78,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.RunMigrations();
+await app.InitializeDatabaseAsync();
+
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -90,10 +88,10 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseHttpsRedirection();
-app.MapControllers();
 app.UseCors();
 app.UseRouting();
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.UseMiddleware<LogSettings>();
 app.Run();
