@@ -82,6 +82,7 @@ public class UserService : IUserQueryService, IUserCommandService
         {
             Email = createUser.Email.ToLower(),
             UserName = createUser.Email.ToLower(),
+            NormalizedEmail = createUser.Email.ToUpper(),
             FirstName = createUser.FirstName,
             LastName = createUser.LastName,
             PhoneNumber = createUser.PhoneNumber,

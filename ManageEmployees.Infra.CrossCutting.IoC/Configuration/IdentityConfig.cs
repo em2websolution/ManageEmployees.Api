@@ -19,7 +19,7 @@ namespace ManageEmployees.Infra.CrossCutting.IoC.Configuration
         {
             TokenSettings(services, configuration);
 
-            services.AddIdentity<User, IdentityRole>(options =>
+            services.AddIdentityCore<User>(options =>
             {
                 options.User.RequireUniqueEmail = false;
                 options.Password.RequireNonAlphanumeric = false;
@@ -29,9 +29,9 @@ namespace ManageEmployees.Infra.CrossCutting.IoC.Configuration
                 options.Password.RequiredLength = 3;
                 options.Lockout.MaxFailedAccessAttempts = 5;
             })
+                .AddRoles<IdentityRole>()
                 .AddUserStore<UserStore>()
-                .AddRoleStore<RoleStore>()
-                .AddDefaultTokenProviders();
+                .AddRoleStore<RoleStore>();
 
             services.AddJwtSecurity(configuration);
             services.AddScoped<JwtSecurityExtensionEvents>();

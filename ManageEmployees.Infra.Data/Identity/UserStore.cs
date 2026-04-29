@@ -9,8 +9,7 @@ namespace ManageEmployees.Infra.Data.Identity
         IUserStore<User>,
         IUserPasswordStore<User>,
         IUserRoleStore<User>,
-        IUserSecurityStampStore<User>,
-        IUserEmailStore<User>
+        IUserSecurityStampStore<User>
     {
         private readonly IDbConnectionFactory _connectionFactory;
 
@@ -215,29 +214,6 @@ namespace ManageEmployees.Infra.Data.Identity
 
         public Task SetSecurityStampAsync(User user, string stamp, CancellationToken ct) { user.SecurityStamp = stamp; return Task.CompletedTask; }
         public Task<string?> GetSecurityStampAsync(User user, CancellationToken ct) => Task.FromResult(user.SecurityStamp);
-
-        #endregion
-
-        #region IUserEmailStore
-
-        public Task SetEmailAsync(User user, string? email, CancellationToken ct) { user.Email = email; return Task.CompletedTask; }
-        public Task<string?> GetEmailAsync(User user, CancellationToken ct) => Task.FromResult(user.Email);
-        public Task<bool> GetEmailConfirmedAsync(User user, CancellationToken ct) => Task.FromResult(user.EmailConfirmed);
-        public Task SetEmailConfirmedAsync(User user, bool confirmed, CancellationToken ct) { user.EmailConfirmed = confirmed; return Task.CompletedTask; }
-        public Task<string?> GetNormalizedEmailAsync(User user, CancellationToken ct) => Task.FromResult(user.NormalizedEmail);
-        public Task SetNormalizedEmailAsync(User user, string? normalizedEmail, CancellationToken ct) { user.NormalizedEmail = normalizedEmail; return Task.CompletedTask; }
-
-        public async Task<User?> FindByEmailAsync(string normalizedEmail, CancellationToken ct)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
-
-            using var command = new SqlCommand("SELECT * FROM Users WHERE NormalizedEmail = @NormalizedEmail", connection);
-            command.Parameters.AddWithValue("@NormalizedEmail", normalizedEmail);
-
-            using var reader = await command.ExecuteReaderAsync(ct);
-            return await reader.ReadAsync(ct) ? MapUser(reader) : null;
-        }
 
         #endregion
 
