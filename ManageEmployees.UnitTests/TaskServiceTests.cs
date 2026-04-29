@@ -71,7 +71,7 @@ public class TaskServiceTests
             TotalCount = 1
         };
 
-        _taskRepositoryMock.Setup(r => r.GetAllAsync(1, 10)).ReturnsAsync(pagedResult);
+        _taskRepositoryMock.Setup(r => r.GetAllAsync(1, 10, null, null, null, null)).ReturnsAsync(pagedResult);
 
         // Act
         var result = await _taskService.GetAllAsync(1, 10);

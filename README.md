@@ -100,18 +100,54 @@ Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status,
 | POST | `/Login/SignUp` | No | Register new user |
 | PUT | `/Login/{userId}` | Yes | Update user |
 | DELETE | `/Login/{userId}` | Yes | Delete user |
-| GET | `/Login/ListAll` | Yes | List all users with roles |
+| GET | `/Login/ListAll` | Yes | List all users (paginated, filterable) |
 | POST | `/Login/SignOut` | Yes | Sign out (invalidate refresh token) |
+
+#### GET `/Login/ListAll` — Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | int | 1 | Page number |
+| `pageSize` | int | 10 | Items per page |
+| `search` | string? | null | Search by FirstName, LastName, Email, DocNumber, PhoneNumber (LIKE) |
+| `role` | string? | null | Filter by exact role name (e.g. `Administrator`, `Employee`) |
 
 ### Tasks (TasksController)
 
 | Method | Route | Auth Required | Description |
 |--------|-------|:---:|-------------|
-| GET | `/Tasks` | Yes | List all tasks |
+| GET | `/Tasks` | Yes | List all tasks (paginated, filterable) |
 | GET | `/Tasks/{id}` | Yes | Get task by ID |
 | POST | `/Tasks` | Yes | Create task (UserId extracted from JWT) |
 | PUT | `/Tasks/{id}` | Yes | Update task |
 | DELETE | `/Tasks/{id}` | Yes | Delete task |
+
+#### GET `/Tasks` — Query Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | int | 1 | Page number |
+| `pageSize` | int | 10 | Items per page |
+| `search` | string? | null | Search by Title or Description (LIKE) |
+| `status` | string? | null | Filter by exact status (`Pending`, `InProgress`, `Completed`) |
+| `startDate` | DateTime? | null | Filter tasks with DueDate >= startDate |
+| `endDate` | DateTime? | null | Filter tasks with DueDate <= endDate (inclusive, uses `< endDate + 1 day`) |
+
+When date filters are active, results are sorted by `DueDate ASC`; otherwise by `CreatedAt DESC`.
+
+### Pagination Response
+
+All list endpoints return `PagedResult<T>`:
+
+```json
+{
+  "items": [...],
+  "page": 1,
+  "pageSize": 10,
+  "totalCount": 42,
+  "totalPages": 5
+}
+```
 
 ### Task Status Values
 - `Pending` (default)
@@ -126,7 +162,7 @@ Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status,
 - **Entities**: `User` (extends IdentityUser + FirstName, LastName, DocNumber), `TaskItem`, `RefreshToken`
 - **DTOs**: `CreateUser`, `UpdateUser`, `CreateTaskRequest`, `UpdateTaskRequest`, `UserDto`, `SignInRequest`
 - **Interfaces**: CQRS service contracts (`IUserQueryService`, `IUserCommandService`, `ITaskQueryService`, `ITaskCommandService`) and repository contracts
-- **Models**: `Token` (AccessToken, RefreshToken, Role, FirstName, UserId), `Error`
+- **Models**: `Token` (AccessToken, RefreshToken, Role, FirstName, UserId), `Error`, `PagedResult<T>` (Items, Page, PageSize, TotalCount, TotalPages)
 - **Exceptions**: `BusinessException`, `NotFoundException`
 - **Constants**: Role names (Administrator, Employee), task statuses, table names
 
@@ -141,9 +177,21 @@ Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status,
 
 ### Infrastructure Layer
 - **Identity**: `UserStore` (IUserStore, IUserPasswordStore, IUserRoleStore, IUserSecurityStampStore), `RoleStore` (IRoleStore)
-- **Repositories**: `RefreshTokenRepository`, `TaskRepository`, `UserRepository` — all raw ADO.NET
+- **Repositories**: `RefreshTokenRepository`, `TaskRepository`, `UserRepository` — all raw ADO.NET with parameterized queries
 - **Connection**: `IDbConnectionFactory` / `SqlConnectionFactory` (Singleton)
 - **DatabaseInitializer**: Idempotent schema creation, index provisioning, and data seeding
+
+### Server-Side Filtering & Pagination
+
+All list endpoints support **server-side pagination** (`OFFSET/FETCH NEXT`) with dynamic `WHERE` clause building:
+
+| Repository | Searchable Fields | Filters | Default Sort |
+|------------|-------------------|---------|--------------|
+| `TaskRepository` | Title, Description (LIKE) | Status (exact), StartDate/EndDate (range) | CreatedAt DESC (DueDate ASC with date filters) |
+| `UserRepository` | FirstName, LastName, Email, DocNumber, PhoneNumber (LIKE) | Role (exact) | FirstName ASC |
+
+- SQL injection is prevented via parameterized queries (`@Search`, `@Status`, `@StartDate`, `@EndDate`, `@Role`)
+- EndDate filter is inclusive: uses `DueDate < @EndDate` where `@EndDate = endDate.Date.AddDays(1)`
 
 ---
 

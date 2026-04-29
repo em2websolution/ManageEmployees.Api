@@ -20,9 +20,9 @@ namespace ManageEmployees.Services.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize)
+        public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize, string? search = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null)
         {
-            return await _taskRepository.GetAllAsync(page, pageSize);
+            return await _taskRepository.GetAllAsync(page, pageSize, search, status, startDate, endDate);
         }
 
         public async Task<TaskItem?> GetByIdAsync(Guid id)

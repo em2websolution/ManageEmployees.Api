@@ -227,7 +227,7 @@ public class LoginControllerTests
             TotalCount = 1
         };
 
-        _userQueryServiceMock.Setup(s => s.GetAllUsersAsync(1, 10)).ReturnsAsync(pagedResult);
+        _userQueryServiceMock.Setup(s => s.GetAllUsersAsync(1, 10, null, null)).ReturnsAsync(pagedResult);
 
         var result = await _controller.GetAllUsersAsync();
 
@@ -240,7 +240,7 @@ public class LoginControllerTests
     public async Task GetAllUsersAsync_ShouldThrow_WhenServiceThrows()
     {
         _userQueryServiceMock
-            .Setup(s => s.GetAllUsersAsync(1, 10))
+            .Setup(s => s.GetAllUsersAsync(1, 10, null, null))
             .ThrowsAsync(new Exception("Database error"));
 
         Func<Task> act = async () => await _controller.GetAllUsersAsync();

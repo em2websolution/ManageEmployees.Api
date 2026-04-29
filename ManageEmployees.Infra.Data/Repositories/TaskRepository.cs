@@ -16,24 +16,69 @@ namespace ManageEmployees.Infra.Data.Repositories
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize)
+        public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize, string? search = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
-            const string countSql = "SELECT COUNT(*) FROM Tasks";
+            var hasSearch = !string.IsNullOrWhiteSpace(search);
+            var hasStatus = !string.IsNullOrWhiteSpace(status);
+            var hasStartDate = startDate.HasValue;
+            var hasEndDate = endDate.HasValue;
+
+            var conditions = new List<string>();
+
+            if (hasSearch)
+                conditions.Add("(Title LIKE @Search OR Description LIKE @Search)");
+
+            if (hasStatus)
+                conditions.Add("Status = @Status");
+
+            if (hasStartDate)
+                conditions.Add("DueDate >= @StartDate");
+
+            if (hasEndDate)
+                conditions.Add("DueDate < @EndDate");
+
+            var whereClause = conditions.Count > 0
+                ? "WHERE " + string.Join(" AND ", conditions)
+                : string.Empty;
+
+            var countSql = $"SELECT COUNT(*) FROM Tasks {whereClause}";
             using var countCommand = new SqlCommand(countSql, connection);
+
+            if (hasSearch)
+                countCommand.Parameters.AddWithValue("@Search", $"%{search}%");
+            if (hasStatus)
+                countCommand.Parameters.AddWithValue("@Status", status);
+            if (hasStartDate)
+                countCommand.Parameters.AddWithValue("@StartDate", startDate!.Value.Date);
+            if (hasEndDate)
+                countCommand.Parameters.AddWithValue("@EndDate", endDate!.Value.Date.AddDays(1));
+
             var totalCount = (int)await countCommand.ExecuteScalarAsync()!;
 
-            const string sql = @"
+            var orderBy = hasStartDate || hasEndDate ? "DueDate ASC" : "CreatedAt DESC";
+
+            var sql = $@"
                 SELECT Id, Title, Description, Status, DueDate, UserId, CreatedAt
                 FROM Tasks
-                ORDER BY CreatedAt DESC
+                {whereClause}
+                ORDER BY {orderBy}
                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
             command.Parameters.AddWithValue("@PageSize", pageSize);
+
+            if (hasSearch)
+                command.Parameters.AddWithValue("@Search", $"%{search}%");
+            if (hasStatus)
+                command.Parameters.AddWithValue("@Status", status);
+            if (hasStartDate)
+                command.Parameters.AddWithValue("@StartDate", startDate!.Value.Date);
+            if (hasEndDate)
+                command.Parameters.AddWithValue("@EndDate", endDate!.Value.Date.AddDays(1));
 
             using var reader = await command.ExecuteReaderAsync();
             var tasks = new List<TaskItem>();

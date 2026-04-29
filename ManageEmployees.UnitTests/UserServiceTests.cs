@@ -435,7 +435,7 @@ public class UserServiceTests
             TotalCount = 2
         };
 
-        _userRepositoryMock.Setup(r => r.GetAllWithRolesAsync(1, 10))
+        _userRepositoryMock.Setup(r => r.GetAllWithRolesAsync(1, 10, null, null))
             .ReturnsAsync(pagedResult);
 
         // Act

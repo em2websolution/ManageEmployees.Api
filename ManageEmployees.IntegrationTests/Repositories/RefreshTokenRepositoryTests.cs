@@ -69,11 +69,13 @@ public class RefreshTokenRepositoryTests
     [Test]
     public async Task CreateAsync_MultipleTimes_ShouldStoreMultipleTokens()
     {
+        var secondUserId = await SeedTestUserAsync();
+
         var token1 = CreateRefreshToken();
         var token2 = new RefreshToken
         {
             Id = Guid.NewGuid(),
-            UserId = _testUserId,
+            UserId = secondUserId,
             Token = "second-refresh-token-value",
             ExpireDate = DateTime.UtcNow.AddDays(14)
         };
@@ -81,9 +83,11 @@ public class RefreshTokenRepositoryTests
         await _repository.CreateAsync(token1);
         await _repository.CreateAsync(token2);
 
-        // GetByUserIdAsync returns first match
-        var result = await _repository.GetByUserIdAsync(_testUserId);
-        result.Should().NotBeNull();
+        var result1 = await _repository.GetByUserIdAsync(_testUserId);
+        result1.Should().NotBeNull();
+
+        var result2 = await _repository.GetByUserIdAsync(secondUserId);
+        result2.Should().NotBeNull();
     }
 
     private RefreshToken CreateRefreshToken() => new()
@@ -97,6 +101,9 @@ public class RefreshTokenRepositoryTests
     private static async Task<string> SeedTestUserAsync()
     {
         var userId = Guid.NewGuid().ToString();
+        var email = $"token-{userId[..8]}@test.com";
+        var normalizedEmail = email.ToUpperInvariant();
+
         using var connection = new SqlConnection(DatabaseFixture.ConnectionString);
         await connection.OpenAsync();
 
@@ -104,11 +111,13 @@ public class RefreshTokenRepositoryTests
             INSERT INTO Users (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed,
                                SecurityStamp, ConcurrencyStamp, PhoneNumberConfirmed, TwoFactorEnabled,
                                LockoutEnabled, AccessFailedCount, FirstName, LastName, DocNumber)
-            VALUES (@Id, 'token@test.com', 'TOKEN@TEST.COM', 'token@test.com', 'TOKEN@TEST.COM', 0,
+            VALUES (@Id, @Email, @NormalizedEmail, @Email, @NormalizedEmail, 0,
                     @Stamp, @Stamp, 0, 0, 0, 0, 'Token', 'User', '99988877766')";
 
         using var cmd = new SqlCommand(sql, connection);
         cmd.Parameters.AddWithValue("@Id", userId);
+        cmd.Parameters.AddWithValue("@Email", email);
+        cmd.Parameters.AddWithValue("@NormalizedEmail", normalizedEmail);
         cmd.Parameters.AddWithValue("@Stamp", Guid.NewGuid().ToString());
         await cmd.ExecuteNonQueryAsync();
 

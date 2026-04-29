@@ -5,7 +5,7 @@ namespace ManageEmployees.Domain.Interfaces.Repositories
 {
     public interface ITaskRepository
     {
-        Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize);
+        Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize, string? search = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null);
         Task<TaskItem?> GetByIdAsync(Guid id);
         Task<List<TaskItem>> GetByUserIdAsync(string userId);
         Task CreateAsync(TaskItem task);

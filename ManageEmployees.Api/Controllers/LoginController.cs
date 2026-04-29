@@ -97,9 +97,9 @@ public class LoginController : ControllerBase
     [HttpGet("ListAll")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAllUsersAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetAllUsersAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string? role = null)
     {
-        var users = await _userQueryService.GetAllUsersAsync(page, pageSize);
+        var users = await _userQueryService.GetAllUsersAsync(page, pageSize, search, role);
         return Ok(users);
     }
 }

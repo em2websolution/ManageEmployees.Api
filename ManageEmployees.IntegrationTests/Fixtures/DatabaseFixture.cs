@@ -86,8 +86,17 @@ public class DatabaseFixture
         using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
 
-        using var cmd = new SqlCommand(sql, connection);
-        await cmd.ExecuteNonQueryAsync();
+        var batches = System.Text.RegularExpressions.Regex
+            .Split(sql, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        foreach (var batch in batches)
+        {
+            var trimmed = batch.Trim();
+            if (string.IsNullOrEmpty(trimmed)) continue;
+
+            using var cmd = new SqlCommand(trimmed, connection);
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 
     private static async Task DropDatabaseAsync()

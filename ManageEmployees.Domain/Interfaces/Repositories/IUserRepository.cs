@@ -5,6 +5,6 @@ namespace ManageEmployees.Domain.Interfaces.Repositories
 {
     public interface IUserRepository
     {
-        Task<PagedResult<UserDto>> GetAllWithRolesAsync(int page, int pageSize);
+        Task<PagedResult<UserDto>> GetAllWithRolesAsync(int page, int pageSize, string? search = null, string? role = null);
     }
 }

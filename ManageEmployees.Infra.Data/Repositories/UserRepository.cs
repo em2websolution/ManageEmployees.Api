@@ -15,32 +15,62 @@ namespace ManageEmployees.Infra.Data.Repositories
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public async Task<PagedResult<UserDto>> GetAllWithRolesAsync(int page, int pageSize)
+        public async Task<PagedResult<UserDto>> GetAllWithRolesAsync(int page, int pageSize, string? search = null, string? role = null)
         {
             using var connection = _connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
-            const string countSql = @"
+            var hasSearch = !string.IsNullOrWhiteSpace(search);
+            var hasRole = !string.IsNullOrWhiteSpace(role);
+
+            var conditions = new List<string>();
+
+            if (hasSearch)
+                conditions.Add(@"(u.FirstName LIKE @Search
+                    OR u.LastName LIKE @Search
+                    OR u.Email LIKE @Search
+                    OR u.DocNumber LIKE @Search
+                    OR u.PhoneNumber LIKE @Search)");
+
+            if (hasRole)
+                conditions.Add("r.Name = @Role");
+
+            var whereClause = conditions.Count > 0
+                ? "WHERE " + string.Join(" AND ", conditions)
+                : string.Empty;
+
+            var countSql = $@"
                 SELECT COUNT(*)
                 FROM Users u
                 LEFT JOIN UserRoles ur ON u.Id = ur.UserId
-                LEFT JOIN Roles r ON ur.RoleId = r.Id";
+                LEFT JOIN Roles r ON ur.RoleId = r.Id
+                {whereClause}";
 
             using var countCommand = new SqlCommand(countSql, connection);
+            if (hasSearch)
+                countCommand.Parameters.AddWithValue("@Search", $"%{search}%");
+            if (hasRole)
+                countCommand.Parameters.AddWithValue("@Role", role);
+
             var totalCount = (int)await countCommand.ExecuteScalarAsync()!;
 
-            const string sql = @"
+            var sql = $@"
                 SELECT u.Id AS UserId, u.FirstName, u.LastName, u.Email, u.DocNumber, u.PhoneNumber,
                        ISNULL(r.Name, '') AS Role
                 FROM Users u
                 LEFT JOIN UserRoles ur ON u.Id = ur.UserId
                 LEFT JOIN Roles r ON ur.RoleId = r.Id
+                {whereClause}
                 ORDER BY u.FirstName
                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
             command.Parameters.AddWithValue("@PageSize", pageSize);
+            if (hasSearch)
+                command.Parameters.AddWithValue("@Search", $"%{search}%");
+            if (hasRole)
+                command.Parameters.AddWithValue("@Role", role);
             using var reader = await command.ExecuteReaderAsync();
 
             var users = new List<UserDto>();

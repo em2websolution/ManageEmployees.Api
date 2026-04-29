@@ -86,7 +86,7 @@ public class TasksControllerTests
             PageSize = 10,
             TotalCount = 1
         };
-        _taskQueryServiceMock.Setup(s => s.GetAllAsync(1, 10)).ReturnsAsync(pagedResult);
+        _taskQueryServiceMock.Setup(s => s.GetAllAsync(1, 10, null, null, null, null)).ReturnsAsync(pagedResult);
 
         var result = await _controller.GetAllAsync();
 
@@ -105,7 +105,7 @@ public class TasksControllerTests
             PageSize = 10,
             TotalCount = 0
         };
-        _taskQueryServiceMock.Setup(s => s.GetAllAsync(1, 10)).ReturnsAsync(pagedResult);
+        _taskQueryServiceMock.Setup(s => s.GetAllAsync(1, 10, null, null, null, null)).ReturnsAsync(pagedResult);
 
         var result = await _controller.GetAllAsync();
 
