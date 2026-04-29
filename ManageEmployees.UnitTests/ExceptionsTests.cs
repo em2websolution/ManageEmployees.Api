@@ -20,9 +20,12 @@ public class ExceptionsTests
         var exception = new BusinessException(message, innerException);
 
         // Assert
-        Assert.That(exception.Message, Is.EqualTo(message));
-        Assert.That(exception.InnerException, Is.EqualTo(innerException));
-        Assert.That(exception.TraceId, Is.EqualTo(activity.Id)); 
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception.Message, Is.EqualTo(message));
+            Assert.That(exception.InnerException, Is.EqualTo(innerException));
+            Assert.That(exception.TraceId, Is.EqualTo(activity.Id));
+        });
 
         activity.Stop();
     }
@@ -40,9 +43,12 @@ public class ExceptionsTests
         var exception = new BusinessException(message, innerException);
 
         // Assert
-        Assert.That(exception.Message, Is.EqualTo(message));
-        Assert.That(exception.InnerException, Is.EqualTo(innerException));
-        Assert.That(exception.TraceId, Is.Null); 
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception.Message, Is.EqualTo(message));
+            Assert.That(exception.InnerException, Is.EqualTo(innerException));
+            Assert.That(exception.TraceId, Is.Null);
+        });
     }
 
     [Test]
@@ -63,9 +69,12 @@ public class ExceptionsTests
         var exception = new BusinessException(message, errors);
 
         // Assert
-        Assert.That(exception.Message, Is.EqualTo(message));
-        Assert.That(exception.Errors, Is.EquivalentTo(errors)); 
-        Assert.That(exception.TraceId, Is.EqualTo(activity.Id)); 
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception.Message, Is.EqualTo(message));
+            Assert.That(exception.Errors, Is.EquivalentTo(errors));
+            Assert.That(exception.TraceId, Is.EqualTo(activity.Id));
+        }); 
 
         activity.Stop();
     }

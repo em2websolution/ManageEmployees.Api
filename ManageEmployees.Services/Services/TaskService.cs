@@ -40,7 +40,7 @@ namespace ManageEmployees.Services.Services
                 Description = request.Description,
                 Status = request.Status,
                 DueDate = request.DueDate,
-                UserId = request.UserId
+                UserId = request.UserId!
             };
 
             await _taskRepository.CreateAsync(task);

@@ -52,7 +52,7 @@ namespace ManageEmployees.Infra.Data.Repositories
             if (hasRole)
                 countCommand.Parameters.AddWithValue("@Role", role);
 
-            var totalCount = (int)await countCommand.ExecuteScalarAsync()!;
+            var totalCount = (int)(await countCommand.ExecuteScalarAsync() ?? 0);
 
             var sql = $@"
                 SELECT u.Id AS UserId, u.FirstName, u.LastName, u.Email, u.DocNumber, u.PhoneNumber,

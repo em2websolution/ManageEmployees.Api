@@ -2,6 +2,7 @@ using ManageEmployees.Infra.Data.Connection;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace ManageEmployees.IntegrationTests;
 
@@ -10,7 +11,7 @@ namespace ManageEmployees.IntegrationTests;
 /// Runs once per test assembly via [SetUpFixture].
 /// </summary>
 [SetUpFixture]
-public class DatabaseFixture
+public partial class DatabaseFixture
 {
     public static IDbConnectionFactory ConnectionFactory { get; private set; } = null!;
     public static string ConnectionString { get; private set; } = null!;
@@ -48,7 +49,9 @@ public class DatabaseFixture
     /// <summary>
     /// Cleans all data from test tables. Called between tests.
     /// </summary>
-    public static async Task CleanTablesAsync()
+#pragma warning disable NUnit1028
+    internal static async Task CleanTablesAsync()
+#pragma warning restore NUnit1028
     {
         using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
@@ -86,8 +89,7 @@ public class DatabaseFixture
         using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
 
-        var batches = System.Text.RegularExpressions.Regex
-            .Split(sql, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        var batches = GoStatementRegex().Split(sql);
 
         foreach (var batch in batches)
         {
@@ -113,6 +115,9 @@ public class DatabaseFixture
             END";
         await cmd.ExecuteNonQueryAsync();
     }
+
+    [GeneratedRegex(@"^\s*GO\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase)]
+    private static partial Regex GoStatementRegex();
 }
 
 /// <summary>

@@ -77,10 +77,10 @@ public class UserServiceTests
         SetupHttpContext(_currentUserId);
     }
 
-    private Mock<UserManager<User>> MockUserManager()
+    private static Mock<UserManager<User>> MockUserManager()
     {
         var store = new Mock<IUserStore<User>>();
-        return new Mock<UserManager<User>>(store.Object, null, null, null, null, null, null, null, null);
+        return new Mock<UserManager<User>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
     }
 
     private void SetupHttpContext(string userId)
@@ -91,8 +91,8 @@ public class UserServiceTests
         responseCookiesMock.Setup(c => c.Append(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CookieOptions>()));
 
         _httpContextAccessorMock.Setup(a => a.HttpContext).Returns(httpContext);
-        _httpContextAccessorMock.Setup(a => a.HttpContext.Request.Cookies[USER]).Returns(userId);
-        _httpContextAccessorMock.Setup(a => a.HttpContext.Response.Cookies).Returns(responseCookiesMock.Object);
+        _httpContextAccessorMock.Setup(a => a.HttpContext!.Request.Cookies[USER]).Returns(userId);
+        _httpContextAccessorMock.Setup(a => a.HttpContext!.Response.Cookies).Returns(responseCookiesMock.Object);
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class UserServiceTests
     {
         // Arrange
         _userManagerMock.Setup(m => m.FindByNameAsync(_createUser.Email.ToLower()))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User?)null);
 
         _userManagerMock.Setup(m => m.CreateAsync(It.IsAny<User>(), _createUser.Password))
             .ReturnsAsync(IdentityResult.Success);
@@ -116,7 +116,7 @@ public class UserServiceTests
         result.Should().Be("User created successfully!");
 
         _userManagerMock.Verify(m => m.CreateAsync(It.Is<User>(u =>
-            u.Email == _createUser.Email.ToLower() &&
+            string.Equals(u.Email, _createUser.Email, StringComparison.OrdinalIgnoreCase) &&
             u.FirstName == _createUser.FirstName &&
             u.LastName == _createUser.LastName &&
             u.DocNumber == _createUser.DocNumber
@@ -132,7 +132,7 @@ public class UserServiceTests
         var credentials = new NetworkCredential("nonexistentuser@example.com", "password123");
 
         _userManagerMock.Setup(m => m.FindByNameAsync(credentials.UserName))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User?)null);
 
         // Act
         Func<Task> act = async () => await _userService.SignInAsync(credentials);
@@ -153,7 +153,7 @@ public class UserServiceTests
             RefreshToken = "refresh-token"
         };
 
-        _userManagerMock.Setup(m => m.FindByNameAsync(_currentUser.UserName.ToLower()))
+        _userManagerMock.Setup(m => m.FindByNameAsync(_currentUser.UserName!.ToLower()))
             .ReturnsAsync(_currentUser);
 
         _userManagerMock.Setup(m => m.CheckPasswordAsync(_currentUser, credentials.Password))
@@ -162,7 +162,7 @@ public class UserServiceTests
         _userManagerMock.Setup(m => m.GetRolesAsync(_currentUser))
             .ReturnsAsync(new List<string> { RoleName.Employee });
 
-        _authServiceMock.Setup(a => a.GenerateTokenAsync(_currentUser.UserName.ToLower()))
+        _authServiceMock.Setup(a => a.GenerateTokenAsync(_currentUser.UserName!.ToLower()))
             .ReturnsAsync(token);
 
         // Act
@@ -186,7 +186,7 @@ public class UserServiceTests
         var responseCookiesMock = new Mock<IResponseCookies>();
         responseCookiesMock.Setup(c => c.Delete(It.IsAny<string>()));
 
-        _httpContextAccessorMock.Setup(a => a.HttpContext.Response.Cookies)
+        _httpContextAccessorMock.Setup(a => a.HttpContext!.Response.Cookies)
             .Returns(responseCookiesMock.Object);
 
         // Act
@@ -212,7 +212,7 @@ public class UserServiceTests
         var responseCookiesMock = new Mock<IResponseCookies>();
         responseCookiesMock.Setup(c => c.Delete(It.IsAny<string>()));
 
-        _httpContextAccessorMock.Setup(a => a.HttpContext.Response.Cookies)
+        _httpContextAccessorMock.Setup(a => a.HttpContext!.Response.Cookies)
             .Returns(responseCookiesMock.Object);
 
         // Act
@@ -225,9 +225,9 @@ public class UserServiceTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((o, t) => o.ToString().Contains("Error occurred during sign out.")),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("Error occurred during sign out.")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             Times.Once);
     }
 
@@ -291,7 +291,7 @@ public class UserServiceTests
     {
         // Arrange
         _userManagerMock.Setup(m => m.FindByNameAsync(_createUser.Email.ToLower()))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User?)null);
 
         _userManagerMock.Setup(m => m.CreateAsync(It.IsAny<User>(), _createUser.Password))
             .Throws(new InvalidOperationException("An unexpected error occurred."));
@@ -339,7 +339,7 @@ public class UserServiceTests
         var userId = "nonexistent-user-id";
 
         _userManagerMock.Setup(m => m.FindByIdAsync(userId))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User?)null);
 
         // Act
         var act = async () => await _userService.UpdateUserAsync(userId, _updateUser);
@@ -389,7 +389,7 @@ public class UserServiceTests
     {
         // Arrange
         _userManagerMock.Setup(m => m.FindByIdAsync(_currentUserId))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User?)null);
 
         // Act
         var act = async () => await _userService.DeleteUserAsync(_currentUserId);

@@ -5,8 +5,7 @@ using Microsoft.Data.SqlClient;
 
 namespace ManageEmployees.Infra.Data.Identity
 {
-    public class UserStore :
-        IUserStore<User>,
+    public sealed class UserStore :
         IUserPasswordStore<User>,
         IUserRoleStore<User>,
         IUserSecurityStampStore<User>
@@ -18,20 +17,24 @@ namespace ManageEmployees.Infra.Data.Identity
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            // No unmanaged resources to release
+            GC.SuppressFinalize(this);
+        }
 
         #region IUserStore
 
-        public Task<string> GetUserIdAsync(User user, CancellationToken ct) => Task.FromResult(user.Id);
-        public Task<string?> GetUserNameAsync(User user, CancellationToken ct) => Task.FromResult(user.UserName);
-        public Task SetUserNameAsync(User user, string? userName, CancellationToken ct) { user.UserName = userName; return Task.CompletedTask; }
-        public Task<string?> GetNormalizedUserNameAsync(User user, CancellationToken ct) => Task.FromResult(user.NormalizedUserName);
-        public Task SetNormalizedUserNameAsync(User user, string? normalizedName, CancellationToken ct) { user.NormalizedUserName = normalizedName; return Task.CompletedTask; }
+        public Task<string> GetUserIdAsync(User user, CancellationToken cancellationToken) => Task.FromResult(user.Id);
+        public Task<string?> GetUserNameAsync(User user, CancellationToken cancellationToken) => Task.FromResult(user.UserName);
+        public Task SetUserNameAsync(User user, string? userName, CancellationToken cancellationToken) { user.UserName = userName; return Task.CompletedTask; }
+        public Task<string?> GetNormalizedUserNameAsync(User user, CancellationToken cancellationToken) => Task.FromResult(user.NormalizedUserName);
+        public Task SetNormalizedUserNameAsync(User user, string? normalizedName, CancellationToken cancellationToken) { user.NormalizedUserName = normalizedName; return Task.CompletedTask; }
 
-        public async Task<IdentityResult> CreateAsync(User user, CancellationToken ct)
+        public async Task<IdentityResult> CreateAsync(User user, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             const string sql = @"
                 INSERT INTO Users (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed,
@@ -45,15 +48,15 @@ namespace ManageEmployees.Infra.Data.Identity
 
             using var command = new SqlCommand(sql, connection);
             AddUserParameters(command, user);
-            await command.ExecuteNonQueryAsync(ct);
+            await command.ExecuteNonQueryAsync(cancellationToken);
 
             return IdentityResult.Success;
         }
 
-        public async Task<IdentityResult> UpdateAsync(User user, CancellationToken ct)
+        public async Task<IdentityResult> UpdateAsync(User user, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             const string sql = @"
                 UPDATE Users SET
@@ -68,67 +71,67 @@ namespace ManageEmployees.Infra.Data.Identity
 
             using var command = new SqlCommand(sql, connection);
             AddUserParameters(command, user);
-            await command.ExecuteNonQueryAsync(ct);
+            await command.ExecuteNonQueryAsync(cancellationToken);
 
             return IdentityResult.Success;
         }
 
-        public async Task<IdentityResult> DeleteAsync(User user, CancellationToken ct)
+        public async Task<IdentityResult> DeleteAsync(User user, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             using var command = new SqlCommand("DELETE FROM Users WHERE Id = @Id", connection);
             command.Parameters.AddWithValue("@Id", user.Id);
-            await command.ExecuteNonQueryAsync(ct);
+            await command.ExecuteNonQueryAsync(cancellationToken);
 
             return IdentityResult.Success;
         }
 
-        public async Task<User?> FindByIdAsync(string userId, CancellationToken ct)
+        public async Task<User?> FindByIdAsync(string userId, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             using var command = new SqlCommand("SELECT * FROM Users WHERE Id = @Id", connection);
             command.Parameters.AddWithValue("@Id", userId);
 
-            using var reader = await command.ExecuteReaderAsync(ct);
-            return await reader.ReadAsync(ct) ? MapUser(reader) : null;
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            return await reader.ReadAsync(cancellationToken) ? MapUser(reader) : null;
         }
 
-        public async Task<User?> FindByNameAsync(string normalizedUserName, CancellationToken ct)
+        public async Task<User?> FindByNameAsync(string normalizedUserName, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             using var command = new SqlCommand("SELECT * FROM Users WHERE NormalizedUserName = @NormalizedUserName", connection);
             command.Parameters.AddWithValue("@NormalizedUserName", normalizedUserName);
 
-            using var reader = await command.ExecuteReaderAsync(ct);
-            return await reader.ReadAsync(ct) ? MapUser(reader) : null;
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            return await reader.ReadAsync(cancellationToken) ? MapUser(reader) : null;
         }
 
         #endregion
 
         #region IUserPasswordStore
 
-        public Task SetPasswordHashAsync(User user, string? passwordHash, CancellationToken ct) { user.PasswordHash = passwordHash; return Task.CompletedTask; }
-        public Task<string?> GetPasswordHashAsync(User user, CancellationToken ct) => Task.FromResult(user.PasswordHash);
-        public Task<bool> HasPasswordAsync(User user, CancellationToken ct) => Task.FromResult(!string.IsNullOrEmpty(user.PasswordHash));
+        public Task SetPasswordHashAsync(User user, string? passwordHash, CancellationToken cancellationToken) { user.PasswordHash = passwordHash; return Task.CompletedTask; }
+        public Task<string?> GetPasswordHashAsync(User user, CancellationToken cancellationToken) => Task.FromResult(user.PasswordHash);
+        public Task<bool> HasPasswordAsync(User user, CancellationToken cancellationToken) => Task.FromResult(!string.IsNullOrEmpty(user.PasswordHash));
 
         #endregion
 
         #region IUserRoleStore
 
-        public async Task AddToRoleAsync(User user, string roleName, CancellationToken ct)
+        public async Task AddToRoleAsync(User user, string roleName, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             using var findCmd = new SqlCommand("SELECT Id FROM Roles WHERE NormalizedName = @NormalizedName", connection);
             findCmd.Parameters.AddWithValue("@NormalizedName", roleName.ToUpperInvariant());
-            var roleId = await findCmd.ExecuteScalarAsync(ct) as string
+            var roleId = await findCmd.ExecuteScalarAsync(cancellationToken) as string
                 ?? throw new InvalidOperationException($"Role '{roleName}' not found.");
 
             using var insertCmd = new SqlCommand(
@@ -136,13 +139,13 @@ namespace ManageEmployees.Infra.Data.Identity
                 connection);
             insertCmd.Parameters.AddWithValue("@UserId", user.Id);
             insertCmd.Parameters.AddWithValue("@RoleId", roleId);
-            await insertCmd.ExecuteNonQueryAsync(ct);
+            await insertCmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        public async Task RemoveFromRoleAsync(User user, string roleName, CancellationToken ct)
+        public async Task RemoveFromRoleAsync(User user, string roleName, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             const string sql = @"
                 DELETE ur FROM UserRoles ur
@@ -152,13 +155,13 @@ namespace ManageEmployees.Infra.Data.Identity
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@UserId", user.Id);
             command.Parameters.AddWithValue("@NormalizedName", roleName.ToUpperInvariant());
-            await command.ExecuteNonQueryAsync(ct);
+            await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        public async Task<IList<string>> GetRolesAsync(User user, CancellationToken ct)
+        public async Task<IList<string>> GetRolesAsync(User user, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             const string sql = @"
                 SELECT r.Name FROM Roles r
@@ -168,9 +171,9 @@ namespace ManageEmployees.Infra.Data.Identity
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@UserId", user.Id);
 
-            using var reader = await command.ExecuteReaderAsync(ct);
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
             var roles = new List<string>();
-            while (await reader.ReadAsync(ct))
+            while (await reader.ReadAsync(cancellationToken))
             {
                 var name = reader.GetString(0);
                 if (!string.IsNullOrEmpty(name))
@@ -179,16 +182,16 @@ namespace ManageEmployees.Infra.Data.Identity
             return roles;
         }
 
-        public async Task<bool> IsInRoleAsync(User user, string roleName, CancellationToken ct)
+        public async Task<bool> IsInRoleAsync(User user, string roleName, CancellationToken cancellationToken)
         {
-            var roles = await GetRolesAsync(user, ct);
+            var roles = await GetRolesAsync(user, cancellationToken);
             return roles.Any(r => r.Equals(roleName, StringComparison.OrdinalIgnoreCase));
         }
 
-        public async Task<IList<User>> GetUsersInRoleAsync(string roleName, CancellationToken ct)
+        public async Task<IList<User>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken)
         {
             using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(ct);
+            await connection.OpenAsync(cancellationToken);
 
             const string sql = @"
                 SELECT u.* FROM Users u
@@ -199,9 +202,9 @@ namespace ManageEmployees.Infra.Data.Identity
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@NormalizedName", roleName.ToUpperInvariant());
 
-            using var reader = await command.ExecuteReaderAsync(ct);
+            using var reader = await command.ExecuteReaderAsync(cancellationToken);
             var users = new List<User>();
-            while (await reader.ReadAsync(ct))
+            while (await reader.ReadAsync(cancellationToken))
             {
                 users.Add(MapUser(reader));
             }
@@ -212,8 +215,8 @@ namespace ManageEmployees.Infra.Data.Identity
 
         #region IUserSecurityStampStore
 
-        public Task SetSecurityStampAsync(User user, string stamp, CancellationToken ct) { user.SecurityStamp = stamp; return Task.CompletedTask; }
-        public Task<string?> GetSecurityStampAsync(User user, CancellationToken ct) => Task.FromResult(user.SecurityStamp);
+        public Task SetSecurityStampAsync(User user, string stamp, CancellationToken cancellationToken) { user.SecurityStamp = stamp; return Task.CompletedTask; }
+        public Task<string?> GetSecurityStampAsync(User user, CancellationToken cancellationToken) => Task.FromResult(user.SecurityStamp);
 
         #endregion
 

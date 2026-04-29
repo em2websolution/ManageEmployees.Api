@@ -75,7 +75,7 @@ public class SignInRequestTests
         Assert.That(validationResults[0].ErrorMessage, Is.EqualTo("Please enter at least 6 characters!"));
     }
 
-    private List<ValidationResult> ValidateModel(object model)
+    private static List<ValidationResult> ValidateModel(object model)
     {
         var validationResults = new List<ValidationResult>();
         var validationContext = new ValidationContext(model);

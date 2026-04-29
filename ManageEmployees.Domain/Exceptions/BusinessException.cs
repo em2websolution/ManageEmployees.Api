@@ -1,5 +1,6 @@
 ﻿using ManageEmployees.Domain.Models;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace ManageEmployees.Domain.Exceptions
 {
@@ -24,5 +25,9 @@ namespace ManageEmployees.Domain.Exceptions
         {
             TraceId = Activity.Current?.Id;
         }
+
+#pragma warning disable SYSLIB0051
+        protected BusinessException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+#pragma warning restore SYSLIB0051
     }
 }

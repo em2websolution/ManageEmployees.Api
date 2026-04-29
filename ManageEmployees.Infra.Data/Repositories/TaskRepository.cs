@@ -47,16 +47,9 @@ namespace ManageEmployees.Infra.Data.Repositories
             var countSql = $"SELECT COUNT(*) FROM Tasks {whereClause}";
             using var countCommand = new SqlCommand(countSql, connection);
 
-            if (hasSearch)
-                countCommand.Parameters.AddWithValue("@Search", $"%{search}%");
-            if (hasStatus)
-                countCommand.Parameters.AddWithValue("@Status", status);
-            if (hasStartDate)
-                countCommand.Parameters.AddWithValue("@StartDate", startDate!.Value.Date);
-            if (hasEndDate)
-                countCommand.Parameters.AddWithValue("@EndDate", endDate!.Value.Date.AddDays(1));
+            AddFilterParameters(countCommand, search, status, startDate, endDate);
 
-            var totalCount = (int)await countCommand.ExecuteScalarAsync()!;
+            var totalCount = (int)(await countCommand.ExecuteScalarAsync() ?? 0);
 
             var orderBy = hasStartDate || hasEndDate ? "DueDate ASC" : "CreatedAt DESC";
 
@@ -71,14 +64,7 @@ namespace ManageEmployees.Infra.Data.Repositories
             command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
             command.Parameters.AddWithValue("@PageSize", pageSize);
 
-            if (hasSearch)
-                command.Parameters.AddWithValue("@Search", $"%{search}%");
-            if (hasStatus)
-                command.Parameters.AddWithValue("@Status", status);
-            if (hasStartDate)
-                command.Parameters.AddWithValue("@StartDate", startDate!.Value.Date);
-            if (hasEndDate)
-                command.Parameters.AddWithValue("@EndDate", endDate!.Value.Date.AddDays(1));
+            AddFilterParameters(command, search, status, startDate, endDate);
 
             using var reader = await command.ExecuteReaderAsync();
             var tasks = new List<TaskItem>();
@@ -174,6 +160,18 @@ namespace ManageEmployees.Infra.Data.Repositories
             command.Parameters.AddWithValue("@Id", id);
             var rows = await command.ExecuteNonQueryAsync();
             return rows > 0;
+        }
+
+        private static void AddFilterParameters(SqlCommand command, string? search, string? status, DateTime? startDate, DateTime? endDate)
+        {
+            if (!string.IsNullOrWhiteSpace(search))
+                command.Parameters.AddWithValue("@Search", $"%{search}%");
+            if (!string.IsNullOrWhiteSpace(status))
+                command.Parameters.AddWithValue("@Status", status);
+            if (startDate.HasValue)
+                command.Parameters.AddWithValue("@StartDate", startDate.Value.Date);
+            if (endDate.HasValue)
+                command.Parameters.AddWithValue("@EndDate", endDate.Value.Date.AddDays(1));
         }
 
         private static TaskItem MapTask(SqlDataReader reader) => new()

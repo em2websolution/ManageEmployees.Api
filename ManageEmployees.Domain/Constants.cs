@@ -2,8 +2,8 @@
 
 public static class RoleName
 {
-    public static string Administrator = "Administrator";
-    public static string Employee = "Employee";
+    public const string Administrator = "Administrator";
+    public const string Employee = "Employee";
 }
 
 public static class TaskItemStatus

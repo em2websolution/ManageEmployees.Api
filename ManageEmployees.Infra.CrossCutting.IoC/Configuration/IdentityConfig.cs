@@ -66,7 +66,7 @@ namespace ManageEmployees.Infra.CrossCutting.IoC.Configuration
 
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["JwtBearerTokenSettings:SecretKey"] ?? throw new ArgumentNullException(nameof(configuration), "JwtBearerTokenSettings:SecretKey is null"))),
+                        Encoding.UTF8.GetBytes(configuration["JwtBearerTokenSettings:SecretKey"] ?? throw new InvalidOperationException("JwtBearerTokenSettings:SecretKey is null"))),
 
                     ValidateLifetime = true,
                     RequireExpirationTime = true,
@@ -84,13 +84,11 @@ namespace ManageEmployees.Infra.CrossCutting.IoC.Configuration
                 };
             });
 
-            services.AddAuthorization(auth =>
-            {
-                auth.AddPolicy(
+            services.AddAuthorizationBuilder()
+                .AddPolicy(
                     "Bearer", new AuthorizationPolicyBuilder()
-                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme‌​)
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireAuthenticatedUser().Build());
-            });
 
             return services;
         }

@@ -51,10 +51,10 @@ public class AuthServiceTests
         };
     }
 
-    private Mock<UserManager<User>> MockUserManager()
+    private static Mock<UserManager<User>> MockUserManager()
     {
         var store = new Mock<IUserStore<User>>();
-        return new Mock<UserManager<User>>(store.Object, null, null, null, null, null, null, null, null);
+        return new Mock<UserManager<User>>(store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class AuthServiceTests
         // Arrange
         var roles = new List<string> { "Role1", "Role2" };
 
-        _userManagerMock.Setup(m => m.FindByNameAsync(_testUser.UserName))
+        _userManagerMock.Setup(m => m.FindByNameAsync(_testUser.UserName!))
             .ReturnsAsync(_testUser);
 
         _userManagerMock.Setup(m => m.GetRolesAsync(_testUser))
@@ -73,14 +73,14 @@ public class AuthServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var token = await _authService.GenerateTokenAsync(_testUser.UserName);
+        var token = await _authService.GenerateTokenAsync(_testUser.UserName!);
 
         // Assert
         token.Should().NotBeNull();
         token.AccessToken.Should().NotBeNullOrEmpty();
         token.RefreshToken.Should().NotBeNullOrEmpty();
 
-        _userManagerMock.Verify(m => m.FindByNameAsync(_testUser.UserName), Times.Once);
+        _userManagerMock.Verify(m => m.FindByNameAsync(_testUser.UserName!), Times.Once);
         _refreshTokenRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<RefreshToken>()), Times.Once);
     }
 
@@ -89,7 +89,7 @@ public class AuthServiceTests
     {
         // Arrange
         _refreshTokenRepositoryMock.Setup(r => r.GetByUserIdAsync(_testUser.Id))
-            .ReturnsAsync((RefreshToken)null);
+            .ReturnsAsync((RefreshToken?)null);
 
         // Act
         var result = await _authService.RemoveRefreshTokenAsync(_testUser.Id);
@@ -105,7 +105,7 @@ public class AuthServiceTests
     public async Task RefreshTokenSwapAsync_ShouldReturnNewToken_WhenRefreshTokenIsValid()
     {
         // Arrange
-        var username = _testUser.UserName;
+        var username = _testUser.UserName!;
         var refreshToken = "valid-refresh-token";
         var dbToken = new RefreshToken
         {
@@ -145,7 +145,7 @@ public class AuthServiceTests
     public async Task RefreshTokenSwapAsync_ShouldThrowException_WhenRefreshTokenIsInvalid()
     {
         // Arrange
-        var username = _testUser.UserName;
+        var username = _testUser.UserName!;
         var refreshToken = "invalid-refresh-token";
         var dbToken = new RefreshToken
         {
@@ -172,7 +172,7 @@ public class AuthServiceTests
     public async Task RefreshTokenSwapAsync_ShouldThrowException_WhenValidationFails()
     {
         // Arrange
-        var username = _testUser.UserName;
+        var username = _testUser.UserName!;
         var refreshToken = "valid-refresh-token";
 
         _userManagerMock.Setup(m => m.FindByNameAsync(username))
