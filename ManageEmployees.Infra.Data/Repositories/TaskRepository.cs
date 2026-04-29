@@ -1,6 +1,7 @@
 using ManageEmployees.Domain;
 using ManageEmployees.Domain.Entities;
 using ManageEmployees.Domain.Interfaces.Repositories;
+using ManageEmployees.Domain.Models;
 using ManageEmployees.Infra.Data.Connection;
 using Microsoft.Data.SqlClient;
 
@@ -15,13 +16,24 @@ namespace ManageEmployees.Infra.Data.Repositories
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public async Task<List<TaskItem>> GetAllAsync()
+        public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize)
         {
             using var connection = _connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
-            const string sql = "SELECT Id, Title, Description, Status, DueDate, UserId, CreatedAt FROM Tasks ORDER BY CreatedAt DESC";
+            const string countSql = "SELECT COUNT(*) FROM Tasks";
+            using var countCommand = new SqlCommand(countSql, connection);
+            var totalCount = (int)await countCommand.ExecuteScalarAsync()!;
+
+            const string sql = @"
+                SELECT Id, Title, Description, Status, DueDate, UserId, CreatedAt
+                FROM Tasks
+                ORDER BY CreatedAt DESC
+                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
             using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Offset", (page - 1) * pageSize);
+            command.Parameters.AddWithValue("@PageSize", pageSize);
 
             using var reader = await command.ExecuteReaderAsync();
             var tasks = new List<TaskItem>();
@@ -29,7 +41,14 @@ namespace ManageEmployees.Infra.Data.Repositories
             {
                 tasks.Add(MapTask(reader));
             }
-            return tasks;
+
+            return new PagedResult<TaskItem>
+            {
+                Items = tasks,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<TaskItem?> GetByIdAsync(Guid id)

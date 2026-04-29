@@ -40,17 +40,19 @@ public class TaskRepositoryTests
         await _repository.CreateAsync(CreateTaskItem("Task 2"));
         await _repository.CreateAsync(CreateTaskItem("Task 3"));
 
-        var result = await _repository.GetAllAsync();
+        var result = await _repository.GetAllAsync(1, 10);
 
-        result.Should().HaveCount(3);
+        result.Items.Should().HaveCount(3);
+        result.TotalCount.Should().Be(3);
     }
 
     [Test]
     public async Task GetAllAsync_WhenEmpty_ShouldReturnEmptyList()
     {
-        var result = await _repository.GetAllAsync();
+        var result = await _repository.GetAllAsync(1, 10);
 
-        result.Should().BeEmpty();
+        result.Items.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
     }
 
     [Test]
@@ -153,11 +155,11 @@ public class TaskRepositoryTests
         task3.CreatedAt = DateTime.UtcNow;
         await _repository.CreateAsync(task3);
 
-        var result = await _repository.GetAllAsync();
+        var result = await _repository.GetAllAsync(1, 10);
 
-        result[0].Title.Should().Be("Third");
-        result[1].Title.Should().Be("Second");
-        result[2].Title.Should().Be("First");
+        result.Items[0].Title.Should().Be("Third");
+        result.Items[1].Title.Should().Be("Second");
+        result.Items[2].Title.Should().Be("First");
     }
 
     private TaskItem CreateTaskItem(string title, string? userId = null) => new()

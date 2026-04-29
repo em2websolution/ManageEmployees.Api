@@ -1,8 +1,9 @@
 using ManageEmployees.Domain.DTO;
+using ManageEmployees.Domain.Models;
 
 namespace ManageEmployees.Domain.Interfaces.Services;
 
 public interface IUserQueryService
 {
-    Task<List<UserDto>> GetAllUsersAsync();
+    Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
 }

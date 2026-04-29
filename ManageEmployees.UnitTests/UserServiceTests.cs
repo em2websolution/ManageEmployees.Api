@@ -427,24 +427,33 @@ public class UserServiceTests
             }
         };
 
-        _userRepositoryMock.Setup(r => r.GetAllWithRolesAsync())
-            .ReturnsAsync(users);
+        var pagedResult = new PagedResult<UserDto>
+        {
+            Items = users,
+            Page = 1,
+            PageSize = 10,
+            TotalCount = 2
+        };
+
+        _userRepositoryMock.Setup(r => r.GetAllWithRolesAsync(1, 10))
+            .ReturnsAsync(pagedResult);
 
         // Act
-        var result = await _userService.GetAllUsersAsync();
+        var result = await _userService.GetAllUsersAsync(1, 10);
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(2);
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(2);
 
-        var firstUser = result.FirstOrDefault(u => u.UserId == "1");
+        var firstUser = result.Items.FirstOrDefault(u => u.UserId == "1");
         firstUser.Should().NotBeNull();
         firstUser!.FirstName.Should().Be("John");
         firstUser.LastName.Should().Be("Doe");
         firstUser.Email.Should().Be("user1@example.com");
         firstUser.DocNumber.Should().Be("123456");
 
-        var secondUser = result.FirstOrDefault(u => u.UserId == "2");
+        var secondUser = result.Items.FirstOrDefault(u => u.UserId == "2");
         secondUser.Should().NotBeNull();
         secondUser!.FirstName.Should().Be("Jane");
         secondUser.LastName.Should().Be("Smith");

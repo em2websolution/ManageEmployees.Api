@@ -23,14 +23,14 @@ public class TasksController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieve all tasks.
+    /// Retrieve all tasks with pagination.
     /// </summary>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAllAsync()
+    public async Task<IActionResult> GetAllAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var tasks = await _taskQueryService.GetAllAsync();
+        var tasks = await _taskQueryService.GetAllAsync(page, pageSize);
         return Ok(tasks);
     }
 

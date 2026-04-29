@@ -11,5 +11,5 @@ public interface IUserService
     Task<bool> SignOutAsync();
     Task<bool> UpdateUserAsync(string userId, UpdateUser updateUser);
     Task<bool> DeleteUserAsync(string userId);
-    Task<List<UserDto>> GetAllUsersAsync();
+    Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
 }

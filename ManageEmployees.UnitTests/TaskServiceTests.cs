@@ -4,6 +4,7 @@ using ManageEmployees.Domain.DTO;
 using ManageEmployees.Domain.Entities;
 using ManageEmployees.Domain.Exceptions;
 using ManageEmployees.Domain.Interfaces.Repositories;
+using ManageEmployees.Domain.Models;
 using ManageEmployees.Services.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -62,15 +63,22 @@ public class TaskServiceTests
     {
         // Arrange
         var tasks = new List<TaskItem> { _existingTask };
+        var pagedResult = new PagedResult<TaskItem>
+        {
+            Items = tasks,
+            Page = 1,
+            PageSize = 10,
+            TotalCount = 1
+        };
 
-        _taskRepositoryMock.Setup(r => r.GetAllAsync()).ReturnsAsync(tasks);
+        _taskRepositoryMock.Setup(r => r.GetAllAsync(1, 10)).ReturnsAsync(pagedResult);
 
         // Act
-        var result = await _taskService.GetAllAsync();
+        var result = await _taskService.GetAllAsync(1, 10);
 
         // Assert
-        result.Should().HaveCount(1);
-        result[0].Title.Should().Be("Existing Task");
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Title.Should().Be("Existing Task");
     }
 
     [Test]

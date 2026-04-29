@@ -118,9 +118,9 @@ namespace ManageEmployees.Infra.Data
         private static async Task SeedSampleTasksAsync(IServiceProvider services)
         {
             var taskRepo = services.GetRequiredService<ITaskRepository>();
-            var tasks = await taskRepo.GetAllAsync();
+            var tasks = await taskRepo.GetAllAsync(1, 1);
 
-            if (tasks.Count > 0)
+            if (tasks.TotalCount > 0)
                 return;
 
             var userManager = services.GetRequiredService<UserManager<User>>();

@@ -92,14 +92,14 @@ public class LoginController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieve all users in the system.
+    /// Retrieve all users with pagination.
     /// </summary>
     [HttpGet("ListAll")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAllUsersAsync()
+    public async Task<IActionResult> GetAllUsersAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var users = await _userQueryService.GetAllUsersAsync();
+        var users = await _userQueryService.GetAllUsersAsync(page, pageSize);
         return Ok(users);
     }
 }

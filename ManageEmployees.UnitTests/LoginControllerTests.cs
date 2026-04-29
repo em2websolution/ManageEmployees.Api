@@ -219,20 +219,28 @@ public class LoginControllerTests
             }
         };
 
-        _userQueryServiceMock.Setup(s => s.GetAllUsersAsync()).ReturnsAsync(users);
+        var pagedResult = new PagedResult<UserDto>
+        {
+            Items = users,
+            Page = 1,
+            PageSize = 10,
+            TotalCount = 1
+        };
+
+        _userQueryServiceMock.Setup(s => s.GetAllUsersAsync(1, 10)).ReturnsAsync(pagedResult);
 
         var result = await _controller.GetAllUsersAsync();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.StatusCode.Should().Be(200);
-        okResult.Value.Should().BeEquivalentTo(users);
+        okResult.Value.Should().BeEquivalentTo(pagedResult);
     }
 
     [Test]
     public async Task GetAllUsersAsync_ShouldThrow_WhenServiceThrows()
     {
         _userQueryServiceMock
-            .Setup(s => s.GetAllUsersAsync())
+            .Setup(s => s.GetAllUsersAsync(1, 10))
             .ThrowsAsync(new Exception("Database error"));
 
         Func<Task> act = async () => await _controller.GetAllUsersAsync();

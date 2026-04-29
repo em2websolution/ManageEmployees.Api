@@ -20,9 +20,10 @@ public class UserRepositoryTests
     [Test]
     public async Task GetAllWithRolesAsync_WhenEmpty_ShouldReturnEmptyList()
     {
-        var result = await _repository.GetAllWithRolesAsync();
+        var result = await _repository.GetAllWithRolesAsync(1, 100);
 
-        result.Should().BeEmpty();
+        result.Items.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
     }
 
     [Test]
@@ -32,13 +33,13 @@ public class UserRepositoryTests
         var roleId = await SeedRoleAsync("Employee");
         await AssignRoleAsync(userId, roleId);
 
-        var result = await _repository.GetAllWithRolesAsync();
+        var result = await _repository.GetAllWithRolesAsync(1, 100);
 
-        result.Should().HaveCount(1);
-        result[0].FirstName.Should().Be("John");
-        result[0].LastName.Should().Be("Doe");
-        result[0].Email.Should().Be("john@test.com");
-        result[0].Role.Should().Be("Employee");
+        result.Items.Should().HaveCount(1);
+        result.Items[0].FirstName.Should().Be("John");
+        result.Items[0].LastName.Should().Be("Doe");
+        result.Items[0].Email.Should().Be("john@test.com");
+        result.Items[0].Role.Should().Be("Employee");
     }
 
     [Test]
@@ -46,10 +47,10 @@ public class UserRepositoryTests
     {
         await SeedUserAsync("norole@test.com", "No", "Role");
 
-        var result = await _repository.GetAllWithRolesAsync();
+        var result = await _repository.GetAllWithRolesAsync(1, 100);
 
-        result.Should().HaveCount(1);
-        result[0].Role.Should().BeEmpty();
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Role.Should().BeEmpty();
     }
 
     [Test]
@@ -59,12 +60,12 @@ public class UserRepositoryTests
         await SeedUserAsync("alice@test.com", "Alice", "Johnson");
         await SeedUserAsync("mike@test.com", "Mike", "Brown");
 
-        var result = await _repository.GetAllWithRolesAsync();
+        var result = await _repository.GetAllWithRolesAsync(1, 100);
 
-        result.Should().HaveCount(3);
-        result[0].FirstName.Should().Be("Alice");
-        result[1].FirstName.Should().Be("Mike");
-        result[2].FirstName.Should().Be("Zara");
+        result.Items.Should().HaveCount(3);
+        result.Items[0].FirstName.Should().Be("Alice");
+        result.Items[1].FirstName.Should().Be("Mike");
+        result.Items[2].FirstName.Should().Be("Zara");
     }
 
     [Test]
@@ -72,10 +73,10 @@ public class UserRepositoryTests
     {
         await SeedUserAsync("full@test.com", "Full", "Data", "99988877766", "11999998888");
 
-        var result = await _repository.GetAllWithRolesAsync();
+        var result = await _repository.GetAllWithRolesAsync(1, 100);
 
-        result[0].DocNumber.Should().Be("99988877766");
-        result[0].PhoneNumber.Should().Be("11999998888");
+        result.Items[0].DocNumber.Should().Be("99988877766");
+        result.Items[0].PhoneNumber.Should().Be("11999998888");
     }
 
     [Test]
@@ -83,9 +84,9 @@ public class UserRepositoryTests
     {
         await SeedUserAsync("nophone@test.com", "No", "Phone");
 
-        var result = await _repository.GetAllWithRolesAsync();
+        var result = await _repository.GetAllWithRolesAsync(1, 100);
 
-        result[0].PhoneNumber.Should().BeNull();
+        result.Items[0].PhoneNumber.Should().BeNull();
     }
 
     private static async Task<string> SeedUserAsync(string email, string firstName, string lastName,

@@ -5,6 +5,7 @@ using ManageEmployees.Domain.DTO;
 using ManageEmployees.Domain.Entities;
 using ManageEmployees.Domain.Exceptions;
 using ManageEmployees.Domain.Interfaces.Services;
+using ManageEmployees.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -78,26 +79,40 @@ public class TasksControllerTests
     public async Task GetAllAsync_ShouldReturnOk_WithTaskList()
     {
         var tasks = new List<TaskItem> { _sampleTask };
-        _taskQueryServiceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(tasks);
+        var pagedResult = new PagedResult<TaskItem>
+        {
+            Items = tasks,
+            Page = 1,
+            PageSize = 10,
+            TotalCount = 1
+        };
+        _taskQueryServiceMock.Setup(s => s.GetAllAsync(1, 10)).ReturnsAsync(pagedResult);
 
         var result = await _controller.GetAllAsync();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.StatusCode.Should().Be(200);
-        okResult.Value.Should().BeEquivalentTo(tasks);
+        okResult.Value.Should().BeEquivalentTo(pagedResult);
     }
 
     [Test]
     public async Task GetAllAsync_ShouldReturnOk_WithEmptyList_WhenNoTasks()
     {
-        _taskQueryServiceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(new List<TaskItem>());
+        var pagedResult = new PagedResult<TaskItem>
+        {
+            Items = new List<TaskItem>(),
+            Page = 1,
+            PageSize = 10,
+            TotalCount = 0
+        };
+        _taskQueryServiceMock.Setup(s => s.GetAllAsync(1, 10)).ReturnsAsync(pagedResult);
 
         var result = await _controller.GetAllAsync();
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.StatusCode.Should().Be(200);
-        var list = okResult.Value as List<TaskItem>;
-        list.Should().BeEmpty();
+        var paged = okResult.Value as PagedResult<TaskItem>;
+        paged!.Items.Should().BeEmpty();
     }
 
     // ── GetByIdAsync ────────────────────────────────────────────

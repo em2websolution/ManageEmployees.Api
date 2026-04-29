@@ -209,8 +209,8 @@ public class UserService : IUserQueryService, IUserCommandService
         return true;
     }
 
-    public async Task<List<UserDto>> GetAllUsersAsync()
+    public async Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize)
     {
-        return await _userRepository.GetAllWithRolesAsync();
+        return await _userRepository.GetAllWithRolesAsync(page, pageSize);
     }
 }

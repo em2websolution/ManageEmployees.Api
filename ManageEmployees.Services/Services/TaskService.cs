@@ -4,6 +4,7 @@ using ManageEmployees.Domain.Entities;
 using ManageEmployees.Domain.Exceptions;
 using ManageEmployees.Domain.Interfaces.Repositories;
 using ManageEmployees.Domain.Interfaces.Services;
+using ManageEmployees.Domain.Models;
 using Microsoft.Extensions.Logging;
 
 namespace ManageEmployees.Services.Services
@@ -19,9 +20,9 @@ namespace ManageEmployees.Services.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<List<TaskItem>> GetAllAsync()
+        public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize)
         {
-            return await _taskRepository.GetAllAsync();
+            return await _taskRepository.GetAllAsync(page, pageSize);
         }
 
         public async Task<TaskItem?> GetByIdAsync(Guid id)
