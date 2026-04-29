@@ -54,12 +54,29 @@ The API starts at `https://localhost:64715` with Swagger UI at the root (`/`).
 
 On startup, `DatabaseInitializer` automatically:
 1. Creates the database `ManageEmployees` if it doesn't exist
-2. Executes schema scripts (`001_CreateTables.sql`)
+2. Executes schema scripts (`001_CreateTables.sql`) — tables + indexes
 3. Seeds roles (Administrator, Employee)
 4. Seeds admin user
 5. Seeds sample tasks
 
 No manual migrations required.
+
+### Database Indexing
+
+All non-clustered indexes are designed based on actual repository query patterns:
+
+| Index | Table | Purpose |
+|-------|-------|---------|
+| `IX_Users_NormalizedUserName` | Users | Login lookups (UNIQUE, filtered) |
+| `IX_Users_NormalizedEmail` | Users | Email lookups (UNIQUE, filtered) |
+| `IX_Users_FirstName` | Users | User listing ORDER BY (covering) |
+| `IX_Roles_NormalizedName` | Roles | Role lookups — 4 code paths (UNIQUE, filtered) |
+| `IX_UserRoles_RoleId` | UserRoles | Reverse FK — GetUsersInRole, RemoveFromRole |
+| `IX_RefreshTokens_UserId` | RefreshTokens | Token lookup + 1-per-user (UNIQUE) |
+| `IX_Tasks_UserId_CreatedAt` | Tasks | User tasks ordered by date (composite, covering) |
+| `IX_Tasks_CreatedAt` | Tasks | All tasks ordered by date (covering) |
+
+Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status, named constraints (`PK_`, `FK_`, `CK_`), filtered indexes on nullable Identity columns.
 
 ---
 
@@ -119,7 +136,7 @@ No manual migrations required.
 - **Identity**: `UserStore` (IUserStore, IUserPasswordStore, IUserRoleStore, IUserEmailStore, IUserSecurityStampStore), `RoleStore` (IRoleStore)
 - **Repositories**: `RefreshTokenRepository`, `TaskRepository`, `UserRepository` — all raw ADO.NET
 - **Connection**: `IDbConnectionFactory` / `SqlConnectionFactory` (Singleton)
-- **DatabaseInitializer**: Idempotent schema creation and data seeding
+- **DatabaseInitializer**: Idempotent schema creation, index provisioning, and data seeding
 
 ---
 

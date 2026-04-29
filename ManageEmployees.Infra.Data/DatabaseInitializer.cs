@@ -60,9 +60,23 @@ namespace ManageEmployees.Infra.Data
             await connection.OpenAsync();
 
             var script = GetEmbeddedScript("001_CreateTables.sql");
-            using var command = connection.CreateCommand();
-            command.CommandText = script;
-            await command.ExecuteNonQueryAsync();
+
+            // GO is a batch separator recognized by SSMS/sqlcmd but not by ADO.NET.
+            // Split the script on GO lines and execute each batch individually.
+            var batches = script.Split(
+                ["\nGO\n", "\nGO\r\n", "\r\nGO\r\n", "\r\nGO\n"],
+                StringSplitOptions.RemoveEmptyEntries
+            );
+
+            foreach (var batch in batches)
+            {
+                var trimmed = batch.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                using var command = connection.CreateCommand();
+                command.CommandText = trimmed;
+                await command.ExecuteNonQueryAsync();
+            }
         }
 
         private static async Task SeedRolesAsync(IServiceProvider services)
