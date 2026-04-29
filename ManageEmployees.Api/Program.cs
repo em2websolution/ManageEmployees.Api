@@ -1,3 +1,4 @@
+using ManageEmployees.Api.Middlewares;
 using ManageEmployees.Infra.CrossCutting.IoC.Configuration;
 using ManageEmployees.Infra.Data;
 using ManageEmployees.Services.Settings;
@@ -90,6 +91,7 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseRouting();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

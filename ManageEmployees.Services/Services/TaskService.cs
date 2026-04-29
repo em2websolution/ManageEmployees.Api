@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ManageEmployees.Services.Services
 {
-    public class TaskService : ITaskService
+    public class TaskService : ITaskQueryService, ITaskCommandService
     {
         private readonly ITaskRepository _taskRepository;
         private readonly ILogger<TaskService> _logger;
@@ -52,7 +52,7 @@ namespace ManageEmployees.Services.Services
         public async Task<TaskItem> UpdateAsync(Guid id, UpdateTaskRequest request)
         {
             var task = await _taskRepository.GetByIdAsync(id)
-                ?? throw new BusinessException($"Task with ID {id} not found.");
+                ?? throw new NotFoundException($"Task with ID {id} not found.");
 
             ValidateStatus(request.Status);
 
@@ -71,7 +71,7 @@ namespace ManageEmployees.Services.Services
         public async Task<bool> DeleteAsync(Guid id)
         {
             var task = await _taskRepository.GetByIdAsync(id)
-                ?? throw new BusinessException($"Task with ID {id} not found.");
+                ?? throw new NotFoundException($"Task with ID {id} not found.");
 
             var result = await _taskRepository.DeleteAsync(id);
 

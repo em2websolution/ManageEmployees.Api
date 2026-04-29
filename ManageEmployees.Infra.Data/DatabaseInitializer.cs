@@ -61,8 +61,6 @@ namespace ManageEmployees.Infra.Data
 
             var script = GetEmbeddedScript("001_CreateTables.sql");
 
-            // GO is a batch separator recognized by SSMS/sqlcmd but not by ADO.NET.
-            // Split the script on GO lines and execute each batch individually.
             var batches = script.Split(
                 ["\nGO\n", "\nGO\r\n", "\r\nGO\r\n", "\r\nGO\n"],
                 StringSplitOptions.RemoveEmptyEntries

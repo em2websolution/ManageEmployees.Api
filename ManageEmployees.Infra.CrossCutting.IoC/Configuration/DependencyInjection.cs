@@ -34,8 +34,10 @@ namespace ManageEmployees.Infra.CrossCutting.IoC.Configuration
         private static void AddServicesDependencyInjection(IServiceCollection services)
         {
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<ITaskService, TaskService>();
+            services.AddScoped<IUserQueryService, UserService>();
+            services.AddScoped<IUserCommandService, UserService>();
+            services.AddScoped<ITaskQueryService, TaskService>();
+            services.AddScoped<ITaskCommandService, TaskService>();
         }
     }
 }

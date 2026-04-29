@@ -138,7 +138,7 @@ public class UserServiceTests
         Func<Task> act = async () => await _userService.SignInAsync(credentials);
 
         // Assert
-        await act.Should().ThrowAsync<BusinessException>()
+        await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"User {credentials.UserName} not found!");
     }
 
@@ -287,7 +287,7 @@ public class UserServiceTests
     }
 
     [Test]
-    public async Task SignUpAsync_ShouldThrowBusinessException_WhenUnhandledExceptionOccurs()
+    public async Task SignUpAsync_ShouldThrow_WhenUnhandledExceptionOccurs()
     {
         // Arrange
         _userManagerMock.Setup(m => m.FindByNameAsync(_createUser.Email.ToLower()))
@@ -300,8 +300,8 @@ public class UserServiceTests
         var act = async () => await _userService.SignUpAsync(_createUser);
 
         // Assert
-        await act.Should().ThrowAsync<BusinessException>()
-            .WithMessage("Couldn't create a new user!*");
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("An unexpected error occurred.");
     }
 
     [Test]
@@ -345,7 +345,7 @@ public class UserServiceTests
         var act = async () => await _userService.UpdateUserAsync(userId, _updateUser);
 
         // Assert
-        await act.Should().ThrowAsync<BusinessException>()
+        await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"User with ID {userId} not found!");
     }
 
@@ -395,7 +395,7 @@ public class UserServiceTests
         var act = async () => await _userService.DeleteUserAsync(_currentUserId);
 
         // Assert
-        await act.Should().ThrowAsync<BusinessException>()
+        await act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"User with ID {_currentUserId} not found!");
     }
 

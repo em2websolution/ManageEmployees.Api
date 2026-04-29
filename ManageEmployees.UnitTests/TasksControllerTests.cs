@@ -15,7 +15,8 @@ namespace ManageEmployees.UnitTests;
 [TestFixture]
 public class TasksControllerTests
 {
-    private Mock<ITaskService> _taskServiceMock;
+    private Mock<ITaskQueryService> _taskQueryServiceMock;
+    private Mock<ITaskCommandService> _taskCommandServiceMock;
     private TasksController _controller;
 
     private TaskItem _sampleTask;
@@ -25,9 +26,10 @@ public class TasksControllerTests
     [SetUp]
     public void Setup()
     {
-        _taskServiceMock = new Mock<ITaskService>();
+        _taskQueryServiceMock = new Mock<ITaskQueryService>();
+        _taskCommandServiceMock = new Mock<ITaskCommandService>();
 
-        _controller = new TasksController(_taskServiceMock.Object);
+        _controller = new TasksController(_taskQueryServiceMock.Object, _taskCommandServiceMock.Object);
 
         // Set up ClaimsPrincipal with UserData claim (simulates authenticated user)
         var claims = new List<Claim>
@@ -76,7 +78,7 @@ public class TasksControllerTests
     public async Task GetAllAsync_ShouldReturnOk_WithTaskList()
     {
         var tasks = new List<TaskItem> { _sampleTask };
-        _taskServiceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(tasks);
+        _taskQueryServiceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(tasks);
 
         var result = await _controller.GetAllAsync();
 
@@ -88,7 +90,7 @@ public class TasksControllerTests
     [Test]
     public async Task GetAllAsync_ShouldReturnOk_WithEmptyList_WhenNoTasks()
     {
-        _taskServiceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(new List<TaskItem>());
+        _taskQueryServiceMock.Setup(s => s.GetAllAsync()).ReturnsAsync(new List<TaskItem>());
 
         var result = await _controller.GetAllAsync();
 
@@ -103,7 +105,7 @@ public class TasksControllerTests
     [Test]
     public async Task GetByIdAsync_ShouldReturnOk_WhenTaskExists()
     {
-        _taskServiceMock.Setup(s => s.GetByIdAsync(_sampleTask.Id)).ReturnsAsync(_sampleTask);
+        _taskQueryServiceMock.Setup(s => s.GetByIdAsync(_sampleTask.Id)).ReturnsAsync(_sampleTask);
 
         var result = await _controller.GetByIdAsync(_sampleTask.Id);
 
@@ -116,7 +118,7 @@ public class TasksControllerTests
     public async Task GetByIdAsync_ShouldReturnNotFound_WhenTaskDoesNotExist()
     {
         var id = Guid.NewGuid();
-        _taskServiceMock.Setup(s => s.GetByIdAsync(id)).ReturnsAsync((TaskItem?)null);
+        _taskQueryServiceMock.Setup(s => s.GetByIdAsync(id)).ReturnsAsync((TaskItem?)null);
 
         var result = await _controller.GetByIdAsync(id);
 
@@ -129,7 +131,7 @@ public class TasksControllerTests
     [Test]
     public async Task CreateAsync_ShouldReturnCreated_WhenDataIsValid()
     {
-        _taskServiceMock
+        _taskCommandServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<CreateTaskRequest>()))
             .ReturnsAsync(_sampleTask);
 
@@ -144,7 +146,7 @@ public class TasksControllerTests
     public async Task CreateAsync_ShouldSetUserIdFromJwtClaims()
     {
         CreateTaskRequest? capturedRequest = null;
-        _taskServiceMock
+        _taskCommandServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<CreateTaskRequest>()))
             .Callback<CreateTaskRequest>(r => capturedRequest = r)
             .ReturnsAsync(_sampleTask);
@@ -156,16 +158,15 @@ public class TasksControllerTests
     }
 
     [Test]
-    public async Task CreateAsync_ShouldReturnBadRequest_WhenServiceThrows()
+    public async Task CreateAsync_ShouldThrow_WhenServiceThrows()
     {
-        _taskServiceMock
+        _taskCommandServiceMock
             .Setup(s => s.CreateAsync(It.IsAny<CreateTaskRequest>()))
             .ThrowsAsync(new BusinessException("Invalid status"));
 
-        var result = await _controller.CreateAsync(_createRequest);
+        Func<Task> act = async () => await _controller.CreateAsync(_createRequest);
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<BusinessException>();
     }
 
     // ── UpdateAsync ─────────────────────────────────────────────
@@ -183,7 +184,7 @@ public class TasksControllerTests
             UserId = _sampleTask.UserId
         };
 
-        _taskServiceMock
+        _taskCommandServiceMock
             .Setup(s => s.UpdateAsync(_sampleTask.Id, _updateRequest))
             .ReturnsAsync(updatedTask);
 
@@ -195,52 +196,39 @@ public class TasksControllerTests
     }
 
     [Test]
-    public async Task UpdateAsync_ShouldReturnBadRequest_WhenServiceThrows()
+    public async Task UpdateAsync_ShouldThrow_WhenServiceThrows()
     {
-        _taskServiceMock
+        _taskCommandServiceMock
             .Setup(s => s.UpdateAsync(_sampleTask.Id, _updateRequest))
-            .ThrowsAsync(new BusinessException("Task not found"));
+            .ThrowsAsync(new NotFoundException("Task not found"));
 
-        var result = await _controller.UpdateAsync(_sampleTask.Id, _updateRequest);
+        Func<Task> act = async () => await _controller.UpdateAsync(_sampleTask.Id, _updateRequest);
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
     // ── DeleteAsync ─────────────────────────────────────────────
 
     [Test]
-    public async Task DeleteAsync_ShouldReturnOk_WhenDeleteSucceeds()
+    public async Task DeleteAsync_ShouldReturnNoContent_WhenDeleteSucceeds()
     {
-        _taskServiceMock.Setup(s => s.DeleteAsync(_sampleTask.Id)).ReturnsAsync(true);
+        _taskCommandServiceMock.Setup(s => s.DeleteAsync(_sampleTask.Id)).ReturnsAsync(true);
 
         var result = await _controller.DeleteAsync(_sampleTask.Id);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.StatusCode.Should().Be(200);
+        var noContentResult = result.Should().BeOfType<NoContentResult>().Subject;
+        noContentResult.StatusCode.Should().Be(204);
     }
 
     [Test]
-    public async Task DeleteAsync_ShouldReturnBadRequest_WhenDeleteFails()
+    public async Task DeleteAsync_ShouldThrow_WhenServiceThrows()
     {
-        _taskServiceMock.Setup(s => s.DeleteAsync(_sampleTask.Id)).ReturnsAsync(false);
-
-        var result = await _controller.DeleteAsync(_sampleTask.Id);
-
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
-    }
-
-    [Test]
-    public async Task DeleteAsync_ShouldReturnBadRequest_WhenServiceThrows()
-    {
-        _taskServiceMock
+        _taskCommandServiceMock
             .Setup(s => s.DeleteAsync(_sampleTask.Id))
-            .ThrowsAsync(new BusinessException("Task not found"));
+            .ThrowsAsync(new NotFoundException("Task not found"));
 
-        var result = await _controller.DeleteAsync(_sampleTask.Id);
+        Func<Task> act = async () => await _controller.DeleteAsync(_sampleTask.Id);
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 }

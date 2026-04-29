@@ -115,6 +115,8 @@ namespace ManageEmployees.Services.Services
             randomNumberGenerator.GetBytes(randomNumber);
             var refreshToken = Convert.ToBase64String(randomNumber);
 
+            await RemoveRefreshTokenAsync(user.Id);
+
             await _refreshTokenRepository.CreateAsync(new RefreshToken
             {
                 Id = Guid.NewGuid(),
@@ -129,7 +131,7 @@ namespace ManageEmployees.Services.Services
         private async Task<User> GetUser(string username)
         {
             var user = await _userManager.FindByNameAsync(username);
-            return user ?? throw new Exception("User not found.");
+            return user ?? throw new NotFoundException($"User '{username}' not found.");
         }
 
         private async Task<bool> ValidateRefreshToken(string userId, string refreshToken)

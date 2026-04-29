@@ -53,7 +53,6 @@ public class DatabaseFixture
         using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync();
 
-        // Order matters due to FK constraints
         var tables = new[] { "Tasks", "RefreshTokens", "UserRoles", "Roles", "Users" };
         foreach (var table in tables)
         {

@@ -14,14 +14,16 @@ namespace ManageEmployees.Api.Controllers;
 [Authorize]
 public class TasksController : ControllerBase
 {
-    private readonly ITaskService _taskService;
+    private readonly ITaskQueryService _taskQueryService;
+    private readonly ITaskCommandService _taskCommandService;
 
     /// <summary>
     /// Initializes a new instance of <see cref="TasksController"/>.
     /// </summary>
-    public TasksController(ITaskService taskService)
+    public TasksController(ITaskQueryService taskQueryService, ITaskCommandService taskCommandService)
     {
-        _taskService = taskService;
+        _taskQueryService = taskQueryService;
+        _taskCommandService = taskCommandService;
     }
 
     /// <summary>
@@ -32,7 +34,7 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllAsync()
     {
-        var tasks = await _taskService.GetAllAsync();
+        var tasks = await _taskQueryService.GetAllAsync();
         return Ok(tasks);
     }
 
@@ -45,7 +47,7 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetByIdAsync(Guid id)
     {
-        var task = await _taskService.GetByIdAsync(id);
+        var task = await _taskQueryService.GetByIdAsync(id);
 
         if (task is null)
             return NotFound(new { Error = $"Task with ID {id} not found." });
@@ -62,16 +64,9 @@ public class TasksController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateTaskRequest request)
     {
-        try
-        {
-            request.UserId = User.FindFirstValue(ClaimTypes.UserData)!;
-            var task = await _taskService.CreateAsync(request);
-            return Created($"/Tasks/{task.Id}", task);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while creating the task.", Details = ex.Message });
-        }
+        request.UserId = User.FindFirstValue(ClaimTypes.UserData)!;
+        var task = await _taskCommandService.CreateAsync(request);
+        return Created($"/Tasks/{task.Id}", task);
     }
 
     /// <summary>
@@ -80,41 +75,24 @@ public class TasksController : ControllerBase
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateTaskRequest request)
     {
-        try
-        {
-            var task = await _taskService.UpdateAsync(id, request);
-            return Ok(task);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while updating the task.", Details = ex.Message });
-        }
+        var task = await _taskCommandService.UpdateAsync(id, request);
+        return Ok(task);
     }
 
     /// <summary>
     /// Delete a task by ID.
     /// </summary>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
-        try
-        {
-            var result = await _taskService.DeleteAsync(id);
-
-            if (!result)
-                return BadRequest("Failed to delete task!");
-
-            return Ok(new { Message = "Task deleted successfully!" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while deleting the task.", Details = ex.Message });
-        }
+        await _taskCommandService.DeleteAsync(id);
+        return NoContent();
     }
 }

@@ -14,137 +14,85 @@ namespace ManageEmployees.Api.Controllers;
 [Authorize]
 public class LoginController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly IUserQueryService _userQueryService;
+    private readonly IUserCommandService _userCommandService;
 
     /// <summary>
     /// Initializes a new instance of <see cref="LoginController"/>.
     /// </summary>
-    public LoginController(IUserService userService)
+    public LoginController(IUserQueryService userQueryService, IUserCommandService userCommandService)
     {
-        _userService = userService;
+        _userQueryService = userQueryService;
+        _userCommandService = userCommandService;
     }
 
     /// <summary>
     /// Sign into the application.
     /// </summary>
-    [HttpPost]
-    [Route("SignIn")]
+    [HttpPost("SignIn")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SignInAsync([FromBody] SignInRequest signInRequest)
     {
-        try
-        {
-            var credentials = new NetworkCredential(signInRequest.UserName, signInRequest.Password);
-            var token = await _userService.SignInAsync(credentials);
-
-            if (token == null)
-                return BadRequest();
-
-            return Ok(token);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while signing in.", Details = ex.Message });
-        }
+        var credentials = new NetworkCredential(signInRequest.UserName, signInRequest.Password);
+        var token = await _userCommandService.SignInAsync(credentials);
+        return Ok(token);
     }
 
     /// <summary>
     /// Create a new user.
     /// </summary>
-    [HttpPost]
-    [Route("SignUp")]
+    [HttpPost("SignUp")]
     [AllowAnonymous]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignUpAsync([FromBody] CreateUser createUser)
     {
-        try
-        {
-            var result = await _userService.SignUpAsync(createUser);
-
-            if (string.IsNullOrEmpty(result))
-                return BadRequest("User creation failed or user already exists!");
-
-            return Ok(new { Message = result });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while creating the user.", Details = ex.Message });
-        }
+        var result = await _userCommandService.SignUpAsync(createUser);
+        return Created(string.Empty, new { Message = result });
     }
 
     /// <summary>
     /// Update user.
     /// </summary>
-    [HttpPut]
-    [Route("{userId}")]
+    [HttpPut("{userId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUserAsync(string userId, [FromBody] UpdateUser updateUser)
     {
-        try
-        {
-            var result = await _userService.UpdateUserAsync(userId, updateUser);
-
-            if (!result)
-                return BadRequest("Failed to update user!");
-
-            return Ok(new { Message = "User updated successfully!" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while updating the user.", Details = ex.Message });
-        }
+        await _userCommandService.UpdateUserAsync(userId, updateUser);
+        return Ok(new { Message = "User updated successfully!" });
     }
 
     /// <summary>
     /// Delete user.
     /// </summary>
-    [HttpDelete]
-    [Route("{userId}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [HttpDelete("{userId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUserAsync(string userId)
     {
-        try
-        {
-            var result = await _userService.DeleteUserAsync(userId);
-
-            if (!result)
-                return BadRequest("Failed to delete user!");
-
-            return Ok(new { Message = "User deleted successfully!" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while deleting the user.", Details = ex.Message });
-        }
+        await _userCommandService.DeleteUserAsync(userId);
+        return NoContent();
     }
 
     /// <summary>
     /// Logout from the application.
     /// </summary>
-    [HttpPost]
-    [Route("SignOut")]
+    [HttpPost("SignOut")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignOutAsync()
     {
-        try
-        {
-            var result = await _userService.SignOutAsync();
+        var result = await _userCommandService.SignOutAsync();
 
-            if (!result)
-                return BadRequest("Sign out failed!");
+        if (!result)
+            return BadRequest(new { Message = "Sign out failed!" });
 
-            return Ok(new { Message = "Sign out successful!" });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = "An error occurred while signing out.", Details = ex.Message });
-        }
+        return Ok(new { Message = "Sign out successful!" });
     }
 
     /// <summary>
@@ -155,14 +103,7 @@ public class LoginController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetAllUsersAsync()
     {
-        try
-        {
-            var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(new { Error = ex.Message });
-        }
+        var users = await _userQueryService.GetAllUsersAsync();
+        return Ok(users);
     }
 }

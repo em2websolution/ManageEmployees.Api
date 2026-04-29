@@ -14,7 +14,8 @@ namespace ManageEmployees.UnitTests;
 [TestFixture]
 public class LoginControllerTests
 {
-    private Mock<IUserService> _userServiceMock;
+    private Mock<IUserQueryService> _userQueryServiceMock;
+    private Mock<IUserCommandService> _userCommandServiceMock;
     private LoginController _controller;
 
     private Token _sampleToken;
@@ -25,9 +26,10 @@ public class LoginControllerTests
     [SetUp]
     public void Setup()
     {
-        _userServiceMock = new Mock<IUserService>();
+        _userQueryServiceMock = new Mock<IUserQueryService>();
+        _userCommandServiceMock = new Mock<IUserCommandService>();
 
-        _controller = new LoginController(_userServiceMock.Object);
+        _controller = new LoginController(_userQueryServiceMock.Object, _userCommandServiceMock.Object);
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -74,7 +76,7 @@ public class LoginControllerTests
     [Test]
     public async Task SignInAsync_ShouldReturnOk_WhenCredentialsAreValid()
     {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.SignInAsync(It.IsAny<NetworkCredential>()))
             .ReturnsAsync(_sampleToken);
 
@@ -86,69 +88,42 @@ public class LoginControllerTests
     }
 
     [Test]
-    public async Task SignInAsync_ShouldReturnBadRequest_WhenTokenIsNull()
+    public async Task SignInAsync_ShouldThrow_WhenServiceThrows()
     {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.SignInAsync(It.IsAny<NetworkCredential>()))
-            .ReturnsAsync((Token?)null!);
+            .ThrowsAsync(new NotFoundException("User not found"));
 
-        var result = await _controller.SignInAsync(_signInRequest);
+        Func<Task> act = async () => await _controller.SignInAsync(_signInRequest);
 
-        result.Should().BeOfType<BadRequestResult>();
-    }
-
-    [Test]
-    public async Task SignInAsync_ShouldReturnBadRequest_WhenServiceThrows()
-    {
-        _userServiceMock
-            .Setup(s => s.SignInAsync(It.IsAny<NetworkCredential>()))
-            .ThrowsAsync(new BusinessException("Invalid credentials"));
-
-        var result = await _controller.SignInAsync(_signInRequest);
-
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
     // ── SignUpAsync ──────────────────────────────────────────────
 
     [Test]
-    public async Task SignUpAsync_ShouldReturnOk_WhenUserCreated()
+    public async Task SignUpAsync_ShouldReturnCreated_WhenUserCreated()
     {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.SignUpAsync(It.IsAny<CreateUser>()))
             .ReturnsAsync("User created successfully!");
 
         var result = await _controller.SignUpAsync(_createUserRequest);
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.StatusCode.Should().Be(200);
+        var createdResult = result.Should().BeOfType<CreatedResult>().Subject;
+        createdResult.StatusCode.Should().Be(201);
     }
 
     [Test]
-    public async Task SignUpAsync_ShouldReturnBadRequest_WhenResultIsEmpty()
+    public async Task SignUpAsync_ShouldThrow_WhenServiceThrows()
     {
-        _userServiceMock
-            .Setup(s => s.SignUpAsync(It.IsAny<CreateUser>()))
-            .ReturnsAsync(string.Empty);
-
-        var result = await _controller.SignUpAsync(_createUserRequest);
-
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
-    }
-
-    [Test]
-    public async Task SignUpAsync_ShouldReturnBadRequest_WhenServiceThrows()
-    {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.SignUpAsync(It.IsAny<CreateUser>()))
             .ThrowsAsync(new BusinessException("Email already exists"));
 
-        var result = await _controller.SignUpAsync(_createUserRequest);
+        Func<Task> act = async () => await _controller.SignUpAsync(_createUserRequest);
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<BusinessException>();
     }
 
     // ── UpdateUserAsync ─────────────────────────────────────────
@@ -156,7 +131,7 @@ public class LoginControllerTests
     [Test]
     public async Task UpdateUserAsync_ShouldReturnOk_WhenUpdateSucceeds()
     {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.UpdateUserAsync("user-123", _updateUserRequest))
             .ReturnsAsync(true);
 
@@ -167,66 +142,40 @@ public class LoginControllerTests
     }
 
     [Test]
-    public async Task UpdateUserAsync_ShouldReturnBadRequest_WhenUpdateFails()
+    public async Task UpdateUserAsync_ShouldThrow_WhenServiceThrows()
     {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.UpdateUserAsync("user-123", _updateUserRequest))
-            .ReturnsAsync(false);
+            .ThrowsAsync(new NotFoundException("User not found"));
 
-        var result = await _controller.UpdateUserAsync("user-123", _updateUserRequest);
+        Func<Task> act = async () => await _controller.UpdateUserAsync("user-123", _updateUserRequest);
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
-    }
-
-    [Test]
-    public async Task UpdateUserAsync_ShouldReturnBadRequest_WhenServiceThrows()
-    {
-        _userServiceMock
-            .Setup(s => s.UpdateUserAsync("user-123", _updateUserRequest))
-            .ThrowsAsync(new BusinessException("User not found"));
-
-        var result = await _controller.UpdateUserAsync("user-123", _updateUserRequest);
-
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
     // ── DeleteUserAsync ─────────────────────────────────────────
 
     [Test]
-    public async Task DeleteUserAsync_ShouldReturnOk_WhenDeleteSucceeds()
+    public async Task DeleteUserAsync_ShouldReturnNoContent_WhenDeleteSucceeds()
     {
-        _userServiceMock.Setup(s => s.DeleteUserAsync("user-123")).ReturnsAsync(true);
+        _userCommandServiceMock.Setup(s => s.DeleteUserAsync("user-123")).ReturnsAsync(true);
 
         var result = await _controller.DeleteUserAsync("user-123");
 
-        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.StatusCode.Should().Be(200);
+        var noContentResult = result.Should().BeOfType<NoContentResult>().Subject;
+        noContentResult.StatusCode.Should().Be(204);
     }
 
     [Test]
-    public async Task DeleteUserAsync_ShouldReturnBadRequest_WhenDeleteFails()
+    public async Task DeleteUserAsync_ShouldThrow_WhenServiceThrows()
     {
-        _userServiceMock.Setup(s => s.DeleteUserAsync("user-123")).ReturnsAsync(false);
-
-        var result = await _controller.DeleteUserAsync("user-123");
-
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
-    }
-
-    [Test]
-    public async Task DeleteUserAsync_ShouldReturnBadRequest_WhenServiceThrows()
-    {
-        _userServiceMock
+        _userCommandServiceMock
             .Setup(s => s.DeleteUserAsync("user-123"))
-            .ThrowsAsync(new BusinessException("User not found"));
+            .ThrowsAsync(new NotFoundException("User not found"));
 
-        var result = await _controller.DeleteUserAsync("user-123");
+        Func<Task> act = async () => await _controller.DeleteUserAsync("user-123");
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
     // ── SignOutAsync ────────────────────────────────────────────
@@ -234,7 +183,7 @@ public class LoginControllerTests
     [Test]
     public async Task SignOutAsync_ShouldReturnOk_WhenSignOutSucceeds()
     {
-        _userServiceMock.Setup(s => s.SignOutAsync()).ReturnsAsync(true);
+        _userCommandServiceMock.Setup(s => s.SignOutAsync()).ReturnsAsync(true);
 
         var result = await _controller.SignOutAsync();
 
@@ -245,7 +194,7 @@ public class LoginControllerTests
     [Test]
     public async Task SignOutAsync_ShouldReturnBadRequest_WhenSignOutFails()
     {
-        _userServiceMock.Setup(s => s.SignOutAsync()).ReturnsAsync(false);
+        _userCommandServiceMock.Setup(s => s.SignOutAsync()).ReturnsAsync(false);
 
         var result = await _controller.SignOutAsync();
 
@@ -270,7 +219,7 @@ public class LoginControllerTests
             }
         };
 
-        _userServiceMock.Setup(s => s.GetAllUsersAsync()).ReturnsAsync(users);
+        _userQueryServiceMock.Setup(s => s.GetAllUsersAsync()).ReturnsAsync(users);
 
         var result = await _controller.GetAllUsersAsync();
 
@@ -280,15 +229,14 @@ public class LoginControllerTests
     }
 
     [Test]
-    public async Task GetAllUsersAsync_ShouldReturnBadRequest_WhenServiceThrows()
+    public async Task GetAllUsersAsync_ShouldThrow_WhenServiceThrows()
     {
-        _userServiceMock
+        _userQueryServiceMock
             .Setup(s => s.GetAllUsersAsync())
             .ThrowsAsync(new Exception("Database error"));
 
-        var result = await _controller.GetAllUsersAsync();
+        Func<Task> act = async () => await _controller.GetAllUsersAsync();
 
-        var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
-        badRequest.StatusCode.Should().Be(400);
+        await act.Should().ThrowAsync<Exception>();
     }
 }

@@ -154,7 +154,7 @@ public class TaskServiceTests
     }
 
     [Test]
-    public void UpdateAsync_ShouldThrowBusinessException_WhenTaskNotFound()
+    public void UpdateAsync_ShouldThrowNotFoundException_WhenTaskNotFound()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -165,7 +165,7 @@ public class TaskServiceTests
         Func<Task> act = async () => await _taskService.UpdateAsync(id, _updateRequest);
 
         // Assert
-        act.Should().ThrowAsync<BusinessException>()
+        act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"Task with ID {id} not found.");
     }
 
@@ -201,7 +201,7 @@ public class TaskServiceTests
     }
 
     [Test]
-    public void DeleteAsync_ShouldThrowBusinessException_WhenTaskNotFound()
+    public void DeleteAsync_ShouldThrowNotFoundException_WhenTaskNotFound()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -212,7 +212,7 @@ public class TaskServiceTests
         Func<Task> act = async () => await _taskService.DeleteAsync(id);
 
         // Assert
-        act.Should().ThrowAsync<BusinessException>()
+        act.Should().ThrowAsync<NotFoundException>()
             .WithMessage($"Task with ID {id} not found.");
     }
 }
