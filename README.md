@@ -40,6 +40,8 @@ ManageEmployees.IntegrationTests/       → NUnit integration tests (22 tests)
 
 ## Getting Started
 
+### Local Development
+
 ```bash
 cd ManageEmployees.Api
 
@@ -51,6 +53,23 @@ dotnet run --project ManageEmployees.Api
 ```
 
 The API starts at `https://localhost:64715` with Swagger UI at the root (`/`).
+
+### Docker
+
+The backend includes a multi-stage Dockerfile (`aspnet:8.0` base → `sdk:8.0` build → publish → runtime).
+
+```bash
+# Run the full stack from the repository root
+docker compose up --build
+```
+
+| Setting | Local | Docker |
+|---------|-------|--------|
+| URL | `https://localhost:64715` | `http://localhost:64715` |
+| SQL Server | `localhost,1433` | `sqlserver,1433` (container name) |
+| Protocol | HTTPS | HTTP (`ASPNETCORE_URLS=http://+:8080`) |
+
+In Docker, the connection string is overridden via environment variable `ConnectionStrings__DBConnection` to point to the `sqlserver` container. Test projects are excluded from the Docker image.
 
 ### Database Initialization
 
