@@ -6,9 +6,7 @@ using System.Net;
 
 namespace ManageEmployees.Api.Controllers;
 
-/// <summary>
-/// Controller for authentication and user management operations.
-/// </summary>
+/// <summary>Authentication and user management.</summary>
 [ApiController]
 [Route("[controller]")]
 [Authorize]
@@ -17,9 +15,7 @@ public class LoginController : ControllerBase
     private readonly IUserQueryService _userQueryService;
     private readonly IUserCommandService _userCommandService;
 
-    /// <summary>
-    /// Initializes a new instance of <see cref="LoginController"/>.
-    /// </summary>
+    /// <inheritdoc />
     public LoginController(IUserQueryService userQueryService, IUserCommandService userCommandService)
     {
         _userQueryService = userQueryService;

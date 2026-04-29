@@ -6,9 +6,7 @@ using System.Security.Claims;
 
 namespace ManageEmployees.Api.Controllers;
 
-/// <summary>
-/// Controller for task management CRUD operations.
-/// </summary>
+/// <summary>Task management CRUD operations.</summary>
 [ApiController]
 [Route("[controller]")]
 [Authorize]
@@ -17,9 +15,7 @@ public class TasksController : ControllerBase
     private readonly ITaskQueryService _taskQueryService;
     private readonly ITaskCommandService _taskCommandService;
 
-    /// <summary>
-    /// Initializes a new instance of <see cref="TasksController"/>.
-    /// </summary>
+    /// <inheritdoc />
     public TasksController(ITaskQueryService taskQueryService, ITaskCommandService taskCommandService)
     {
         _taskQueryService = taskQueryService;

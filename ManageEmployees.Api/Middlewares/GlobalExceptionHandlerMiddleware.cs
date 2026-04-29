@@ -6,6 +6,7 @@ using System.Text.Json;
 
 namespace ManageEmployees.Api.Middlewares;
 
+/// <summary>Global exception handler middleware producing RFC 7807 responses.</summary>
 public class GlobalExceptionHandlerMiddleware
 {
     private readonly RequestDelegate _next;
@@ -16,12 +17,14 @@ public class GlobalExceptionHandlerMiddleware
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    /// <inheritdoc />
     public GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
+    /// <summary>Processes the HTTP request and handles exceptions.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         try

@@ -14,7 +14,7 @@ ManageEmployees.Domain/                 → Entities, DTOs, Interfaces, Models, 
 ManageEmployees.Services/               → Business logic (AuthService, UserService, TaskService)
 ManageEmployees.Infra.Data/             → ADO.NET repositories, Identity stores, SQL scripts
 ManageEmployees.Infra.CrossCutting.IoC/ → DI registration, Identity config
-ManageEmployees.UnitTests/              → NUnit unit tests (73 tests)
+ManageEmployees.UnitTests/              → NUnit unit tests (62 tests)
 ManageEmployees.IntegrationTests/       → NUnit integration tests (22 tests)
 ```
 
@@ -27,6 +27,8 @@ ManageEmployees.IntegrationTests/       → NUnit integration tests (22 tests)
 | SQL Server | Relational storage via `Microsoft.Data.SqlClient` |
 | JWT Bearer | Stateless auth with access + refresh tokens |
 | Clean Architecture | Separation of concerns across layers |
+| CQRS-Lite | Query/Command service interfaces per domain |
+| Global Exception Handler | RFC 7807 error responses via middleware |
 
 ---
 
@@ -123,17 +125,22 @@ Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status,
 ### Domain Layer
 - **Entities**: `User` (extends IdentityUser + FirstName, LastName, DocNumber), `TaskItem`, `RefreshToken`
 - **DTOs**: `CreateUser`, `UpdateUser`, `CreateTaskRequest`, `UpdateTaskRequest`, `UserDto`, `SignInRequest`
-- **Interfaces**: Service and repository contracts
+- **Interfaces**: CQRS service contracts (`IUserQueryService`, `IUserCommandService`, `ITaskQueryService`, `ITaskCommandService`) and repository contracts
 - **Models**: `Token` (AccessToken, RefreshToken, Role, FirstName, UserId), `Error`
+- **Exceptions**: `BusinessException`, `NotFoundException`
 - **Constants**: Role names (Administrator, Employee), task statuses, table names
 
 ### Services Layer
-- **UserService**: Sign-in (password validation + JWT), sign-up, update, delete, list users
+- **UserService**: Sign-in (password validation + JWT), sign-up, update, delete, list users — implements `IUserQueryService` + `IUserCommandService`
 - **AuthService**: JWT generation with claims, refresh token swap, token removal
-- **TaskService**: CRUD with status validation
+- **TaskService**: CRUD with status validation — implements `ITaskQueryService` + `ITaskCommandService`
+
+### API Layer
+- **Controllers**: Thin controllers with no try/catch — exceptions bubble to middleware
+- **GlobalExceptionHandlerMiddleware**: Maps `NotFoundException` → 404, `BusinessException` → 400, `UnauthorizedAccessException` → 403, others → 500 (RFC 7807 format)
 
 ### Infrastructure Layer
-- **Identity**: `UserStore` (IUserStore, IUserPasswordStore, IUserRoleStore, IUserEmailStore, IUserSecurityStampStore), `RoleStore` (IRoleStore)
+- **Identity**: `UserStore` (IUserStore, IUserPasswordStore, IUserRoleStore, IUserSecurityStampStore), `RoleStore` (IRoleStore)
 - **Repositories**: `RefreshTokenRepository`, `TaskRepository`, `UserRepository` — all raw ADO.NET
 - **Connection**: `IDbConnectionFactory` / `SqlConnectionFactory` (Singleton)
 - **DatabaseInitializer**: Idempotent schema creation, index provisioning, and data seeding
@@ -148,21 +155,21 @@ Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status,
 dotnet test
 ```
 
-**89 tests** (67 unit + 22 integration), all passing:
+**84 tests** (62 unit + 22 integration), all passing:
 
 ### Unit Tests (ManageEmployees.UnitTests)
 
 | Layer | Test Class | Tests | Scope |
 |-------|------------|:-----:|-------|
-| API | TasksControllerTests | 12 | HTTP responses, JWT claim extraction, error handling |
-| API | LoginControllerTests | 16 | SignIn/SignUp/Update/Delete/SignOut/ListAll responses |
+| API | TasksControllerTests | 11 | HTTP responses, JWT claim extraction, error delegation |
+| API | LoginControllerTests | 12 | SignIn/SignUp/Update/Delete/SignOut/ListAll responses |
 | Services | TaskServiceTests | 10 | CRUD, status validation, not-found errors |
 | Services | UserServiceTests | 15 | Sign-in, sign-up, update, delete, list |
 | Services | AuthServiceTests | 5 | Token generation, refresh swap, removal |
 | Domain | ConstantsTests | 2 | Role names, task statuses |
 | Domain | SignInRequestTests | 4 | DTO field validation |
 | Domain | ExceptionsTests | 3 | BusinessException constructors, trace ID |
-| | **Subtotal** | **67** | |
+| | **Subtotal** | **62** | |
 
 ### Integration Tests (ManageEmployees.IntegrationTests)
 
@@ -173,7 +180,7 @@ dotnet test
 | Data Access | UserRepositoryTests | 6 | Roles join, ordering, nullable fields, empty list |
 | | **Subtotal** | **22** | |
 
-| | **Total** | **89** | |
+| | **Total** | **84** | |
 
 ---
 
