@@ -7,18 +7,13 @@ using System.Net;
 namespace ManageEmployees.Api.Controllers;
 
 /// <summary>Authentication (sign-in / sign-out).</summary>
+/// <inheritdoc />
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class LoginController : ControllerBase
+public class LoginController(IUserCommandService userCommandService) : ControllerBase
 {
-    private readonly IUserCommandService _userCommandService;
-
-    /// <inheritdoc />
-    public LoginController(IUserCommandService userCommandService)
-    {
-        _userCommandService = userCommandService;
-    }
+    private readonly IUserCommandService _userCommandService = userCommandService;
 
     /// <summary>
     /// Sign into the application.
