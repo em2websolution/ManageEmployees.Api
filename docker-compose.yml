@@ -21,7 +21,7 @@ services:
 
   api:
     build:
-      context: ./ManageEmployees.Api
+      context: .
       dockerfile: Dockerfile
     container_name: manage-api
     environment:
@@ -38,7 +38,7 @@ services:
 
   frontend:
     build:
-      context: ./ManageEmployees.Front
+      context: ../ManageEmployees.Front
       dockerfile: Dockerfile
     container_name: manage-frontend
     environment:

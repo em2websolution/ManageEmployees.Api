@@ -59,7 +59,7 @@ The API starts at `https://localhost:64715` with Swagger UI at the root (`/`).
 The backend includes a multi-stage Dockerfile (`aspnet:8.0` base → `sdk:8.0` build → publish → runtime).
 
 ```bash
-# Run the full stack from the repository root
+# Run the full stack from the backend directory (ManageEmployees.Api/)
 docker compose up --build
 ```
 
