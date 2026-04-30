@@ -9,11 +9,10 @@ namespace ManageEmployees.Infra.Data.Repositories
 {
     public class TaskRepository(IDbConnectionFactory connectionFactory) : ITaskRepository
     {
-        private readonly IDbConnectionFactory _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
         public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize, string? search = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
             var hasSearch = !string.IsNullOrWhiteSpace(search);
@@ -79,7 +78,7 @@ namespace ManageEmployees.Infra.Data.Repositories
 
         public async Task<TaskItem?> GetByIdAsync(Guid id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
             using var command = new SqlCommand("SELECT Id, Title, Description, Status, DueDate, UserId, CreatedAt FROM Tasks WHERE Id = @Id", connection);
@@ -91,7 +90,7 @@ namespace ManageEmployees.Infra.Data.Repositories
 
         public async Task<List<TaskItem>> GetByUserIdAsync(string userId)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
             using var command = new SqlCommand("SELECT Id, Title, Description, Status, DueDate, UserId, CreatedAt FROM Tasks WHERE UserId = @UserId ORDER BY CreatedAt DESC", connection);
@@ -108,7 +107,7 @@ namespace ManageEmployees.Infra.Data.Repositories
 
         public async Task CreateAsync(TaskItem task)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
             const string sql = @"
@@ -124,7 +123,7 @@ namespace ManageEmployees.Infra.Data.Repositories
 
         public async Task UpdateAsync(TaskItem task)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
             const string sql = @"
@@ -140,7 +139,7 @@ namespace ManageEmployees.Infra.Data.Repositories
 
         public async Task<bool> DeleteAsync(Guid id)
         {
-            using var connection = _connectionFactory.CreateConnection();
+            using var connection = connectionFactory.CreateConnection();
             await connection.OpenAsync();
 
             using var command = new SqlCommand("DELETE FROM Tasks WHERE Id = @Id", connection);

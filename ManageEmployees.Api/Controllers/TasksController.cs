@@ -13,9 +13,6 @@ namespace ManageEmployees.Api.Controllers;
 [Authorize]
 public class TasksController(ITaskQueryService taskQueryService, ITaskCommandService taskCommandService) : ControllerBase
 {
-    private readonly ITaskQueryService _taskQueryService = taskQueryService;
-    private readonly ITaskCommandService _taskCommandService = taskCommandService;
-
     /// <summary>
     /// Retrieve all tasks with pagination.
     /// </summary>
@@ -30,7 +27,7 @@ public class TasksController(ITaskQueryService taskQueryService, ITaskCommandSer
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null)
     {
-        var tasks = await _taskQueryService.GetAllAsync(page, pageSize, search, status, startDate, endDate);
+        var tasks = await taskQueryService.GetAllAsync(page, pageSize, search, status, startDate, endDate);
         return Ok(tasks);
     }
 
@@ -43,7 +40,7 @@ public class TasksController(ITaskQueryService taskQueryService, ITaskCommandSer
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetByIdAsync(Guid id)
     {
-        var task = await _taskQueryService.GetByIdAsync(id);
+        var task = await taskQueryService.GetByIdAsync(id);
 
         if (task is null)
             return NotFound(new { Error = $"Task with ID {id} not found." });
@@ -61,7 +58,7 @@ public class TasksController(ITaskQueryService taskQueryService, ITaskCommandSer
     public async Task<IActionResult> CreateAsync([FromBody] CreateTaskRequest request)
     {
         request.UserId = User.FindFirstValue(ClaimTypes.UserData)!;
-        var task = await _taskCommandService.CreateAsync(request);
+        var task = await taskCommandService.CreateAsync(request);
         return Created($"/Tasks/{task.Id}", task);
     }
 
@@ -75,7 +72,7 @@ public class TasksController(ITaskQueryService taskQueryService, ITaskCommandSer
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateTaskRequest request)
     {
-        var task = await _taskCommandService.UpdateAsync(id, request);
+        var task = await taskCommandService.UpdateAsync(id, request);
         return Ok(task);
     }
 
@@ -88,7 +85,7 @@ public class TasksController(ITaskQueryService taskQueryService, ITaskCommandSer
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
-        await _taskCommandService.DeleteAsync(id);
+        await taskCommandService.DeleteAsync(id);
         return NoContent();
     }
 }

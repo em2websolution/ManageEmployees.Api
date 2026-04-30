@@ -13,8 +13,6 @@ namespace ManageEmployees.Api.Controllers;
 [Authorize]
 public class LoginController(IUserCommandService userCommandService) : ControllerBase
 {
-    private readonly IUserCommandService _userCommandService = userCommandService;
-
     /// <summary>
     /// Sign into the application.
     /// </summary>
@@ -26,7 +24,7 @@ public class LoginController(IUserCommandService userCommandService) : Controlle
     public async Task<IActionResult> SignInAsync([FromBody] SignInRequest signInRequest)
     {
         var credentials = new NetworkCredential(signInRequest.UserName, signInRequest.Password);
-        var token = await _userCommandService.SignInAsync(credentials);
+        var token = await userCommandService.SignInAsync(credentials);
         return Ok(token);
     }
 
@@ -38,7 +36,7 @@ public class LoginController(IUserCommandService userCommandService) : Controlle
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SignOutAsync()
     {
-        var result = await _userCommandService.SignOutAsync();
+        var result = await userCommandService.SignOutAsync();
 
         if (!result)
             return BadRequest(new { Message = "Sign out failed!" });
