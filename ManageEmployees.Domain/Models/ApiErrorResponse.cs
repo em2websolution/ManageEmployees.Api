@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 namespace ManageEmployees.Domain.Models;
 
 /// <summary>
-/// Standardized API error response based on RFC 7807 (Problem Details).
+/// Standardized API error response.
 /// </summary>
 public class ApiErrorResponse
 {

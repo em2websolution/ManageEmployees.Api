@@ -28,7 +28,7 @@ ManageEmployees.IntegrationTests/       → NUnit integration tests (75 tests)
 | JWT Bearer | Stateless auth with access + refresh tokens |
 | Clean Architecture | Separation of concerns across layers |
 | CQRS-Lite | Query/Command service interfaces per domain |
-| Global Exception Handler | RFC 7807 error responses via middleware |
+| Global Exception Handler | Standardized error responses via middleware |
 
 ---
 
@@ -192,7 +192,7 @@ All list endpoints return `PagedResult<T>`:
 
 ### API Layer
 - **Controllers**: Thin controllers with no try/catch — exceptions bubble to middleware
-- **GlobalExceptionHandlerMiddleware**: Maps `NotFoundException` → 404, `BusinessException` → 400, `UnauthorizedAccessException` → 403, others → 500 (RFC 7807 format)
+- **GlobalExceptionHandlerMiddleware**: Maps `NotFoundException` → 404, `BusinessException` → 400, `UnauthorizedAccessException` → 403, others → 500
 
 ### Infrastructure Layer
 - **Identity**: `UserStore` (IUserStore, IUserPasswordStore, IUserRoleStore, IUserSecurityStampStore), `RoleStore` (IRoleStore)

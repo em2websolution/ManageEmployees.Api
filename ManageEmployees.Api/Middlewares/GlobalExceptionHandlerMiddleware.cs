@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace ManageEmployees.Api.Middlewares;
 
-/// <summary>Global exception handler middleware producing RFC 7807 responses.</summary>
+/// <summary>Global exception handler middleware.</summary>
 public class GlobalExceptionHandlerMiddleware
 {
     private readonly RequestDelegate _next;

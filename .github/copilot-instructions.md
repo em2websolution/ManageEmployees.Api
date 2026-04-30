@@ -43,7 +43,7 @@ DI:                  DependencyInjection.cs                    -> Infra.CrossCut
 | JWT Bearer | Stateless auth with access + refresh tokens |
 | Clean Architecture | Separation of concerns across layers |
 | CQRS-Lite | Query/Command service interfaces per domain (`IUserQueryService`, `IUserCommandService`) |
-| Global Exception Handler | RFC 7807 error responses via middleware (no try/catch in controllers) |
+| Global Exception Handler | Standardized error responses via middleware (no try/catch in controllers) |
 | DatabaseInitializer | Idempotent schema creation + index provisioning + data seeding on startup |
 
 ---

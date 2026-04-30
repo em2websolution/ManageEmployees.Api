@@ -106,7 +106,7 @@ public class PagedResult<T>
 
 ### Controllers (thin — no try/catch)
 ```csharp
-// Exceptions bubble to GlobalExceptionHandlerMiddleware (RFC 7807)
+// Exceptions bubble to GlobalExceptionHandlerMiddleware
 [ApiController]
 [Route("[controller]")]
 public class TasksController : ControllerBase
