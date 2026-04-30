@@ -116,13 +116,13 @@ Additional: `NEWSEQUENTIALID()` for GUID PKs, `CHECK` constraint on Task.Status,
 | Method | Route | Auth Required | Description |
 |--------|-------|:---:|-------------|
 | POST | `/Login/SignIn` | No | Authenticate user, returns JWT |
-| POST | `/Login/SignUp` | No | Register new user |
-| PUT | `/Login/{userId}` | Yes | Update user |
-| DELETE | `/Login/{userId}` | Yes | Delete user |
-| GET | `/Login/ListAll` | Yes | List all users (paginated, filterable) |
+| POST | `/Users` | No | Register new user |
+| PUT | `/Users/{userId}` | Yes | Update user |
+| DELETE | `/Users/{userId}` | Yes | Delete user |
+| GET | `/Users` | Yes | List all users (paginated, filterable) |
 | POST | `/Login/SignOut` | Yes | Sign out (invalidate refresh token) |
 
-#### GET `/Login/ListAll` — Query Parameters
+#### GET `/Users` — Query Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|

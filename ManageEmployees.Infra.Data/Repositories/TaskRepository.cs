@@ -7,14 +7,9 @@ using Microsoft.Data.SqlClient;
 
 namespace ManageEmployees.Infra.Data.Repositories
 {
-    public class TaskRepository : ITaskRepository
+    public class TaskRepository(IDbConnectionFactory connectionFactory) : ITaskRepository
     {
-        private readonly IDbConnectionFactory _connectionFactory;
-
-        public TaskRepository(IDbConnectionFactory connectionFactory)
-        {
-            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
-        }
+        private readonly IDbConnectionFactory _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 
         public async Task<PagedResult<TaskItem>> GetAllAsync(int page, int pageSize, string? search = null, string? status = null, DateTime? startDate = null, DateTime? endDate = null)
         {

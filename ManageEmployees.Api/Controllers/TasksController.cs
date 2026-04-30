@@ -7,20 +7,14 @@ using System.Security.Claims;
 namespace ManageEmployees.Api.Controllers;
 
 /// <summary>Task management CRUD operations.</summary>
+/// <inheritdoc />
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class TasksController : ControllerBase
+public class TasksController(ITaskQueryService taskQueryService, ITaskCommandService taskCommandService) : ControllerBase
 {
-    private readonly ITaskQueryService _taskQueryService;
-    private readonly ITaskCommandService _taskCommandService;
-
-    /// <inheritdoc />
-    public TasksController(ITaskQueryService taskQueryService, ITaskCommandService taskCommandService)
-    {
-        _taskQueryService = taskQueryService;
-        _taskCommandService = taskCommandService;
-    }
+    private readonly ITaskQueryService _taskQueryService = taskQueryService;
+    private readonly ITaskCommandService _taskCommandService = taskCommandService;
 
     /// <summary>
     /// Retrieve all tasks with pagination.

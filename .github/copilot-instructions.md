@@ -195,10 +195,10 @@ SQL injection prevented via parameterized queries (`@Search`, `@Status`, `@Start
 | Method | Route | Auth | Description |
 |--------|-------|:----:|-------------|
 | POST | `/Login/SignIn` | No | Authenticate user, returns JWT |
-| POST | `/Login/SignUp` | No | Register new user |
-| PUT | `/Login/{userId}` | Yes | Update user |
-| DELETE | `/Login/{userId}` | Yes | Delete user |
-| GET | `/Login/ListAll` | Yes | List users (paginated, filterable) |
+| POST | `/Users` | No | Register new user |
+| PUT | `/Users/{userId}` | Yes | Update user |
+| DELETE | `/Users/{userId}` | Yes | Delete user |
+| GET | `/Users` | Yes | List users (paginated, filterable) |
 | POST | `/Login/SignOut` | Yes | Sign out (invalidate refresh token) |
 | GET | `/Tasks` | Yes | List tasks (paginated, filterable) |
 | GET | `/Tasks/{id}` | Yes | Get task by ID |
