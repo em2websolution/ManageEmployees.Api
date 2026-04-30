@@ -162,6 +162,161 @@ public class TaskRepositoryTests
         result.Items[2].Title.Should().Be("First");
     }
 
+    [Test]
+    public async Task GetAllAsync_WithSearchFilter_ShouldReturnMatchingTasks()
+    {
+        await _repository.CreateAsync(CreateTaskItem("Important Report"));
+        await _repository.CreateAsync(CreateTaskItem("Daily Standup"));
+        await _repository.CreateAsync(CreateTaskItem("Important Review"));
+
+        var result = await _repository.GetAllAsync(1, 10, search: "Important");
+
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(2);
+        result.Items.Should().AllSatisfy(t => t.Title.Should().Contain("Important"));
+    }
+
+    [Test]
+    public async Task GetAllAsync_WithStatusFilter_ShouldReturnMatchingTasks()
+    {
+        var pending = CreateTaskItem("Pending Task");
+        pending.Status = "Pending";
+        await _repository.CreateAsync(pending);
+
+        var completed = CreateTaskItem("Completed Task");
+        completed.Status = "Completed";
+        await _repository.CreateAsync(completed);
+
+        var inProgress = CreateTaskItem("InProgress Task");
+        inProgress.Status = "InProgress";
+        await _repository.CreateAsync(inProgress);
+
+        var result = await _repository.GetAllAsync(1, 10, status: "Completed");
+
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Title.Should().Be("Completed Task");
+    }
+
+    [Test]
+    public async Task GetAllAsync_WithStartDateFilter_ShouldReturnTasksAfterDate()
+    {
+        var oldTask = CreateTaskItem("Old Task");
+        oldTask.DueDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(oldTask);
+
+        var recentTask = CreateTaskItem("Recent Task");
+        recentTask.DueDate = new DateTime(2024, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(recentTask);
+
+        var futureTask = CreateTaskItem("Future Task");
+        futureTask.DueDate = new DateTime(2024, 12, 1, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(futureTask);
+
+        var startDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        var result = await _repository.GetAllAsync(1, 10, startDate: startDate);
+
+        result.Items.Should().HaveCount(2);
+        result.Items.Should().AllSatisfy(t => t.DueDate.Should().BeOnOrAfter(startDate));
+    }
+
+    [Test]
+    public async Task GetAllAsync_WithEndDateFilter_ShouldReturnTasksBeforeDate()
+    {
+        var earlyTask = CreateTaskItem("Early Task");
+        earlyTask.DueDate = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(earlyTask);
+
+        var midTask = CreateTaskItem("Mid Task");
+        midTask.DueDate = new DateTime(2024, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(midTask);
+
+        var lateTask = CreateTaskItem("Late Task");
+        lateTask.DueDate = new DateTime(2024, 12, 1, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(lateTask);
+
+        var endDate = new DateTime(2024, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+        var result = await _repository.GetAllAsync(1, 10, endDate: endDate);
+
+        result.Items.Should().HaveCount(2);
+    }
+
+    [Test]
+    public async Task GetAllAsync_WithStartAndEndDate_ShouldReturnTasksInRange_OrderedByDueDate()
+    {
+        var task1 = CreateTaskItem("Task Jan");
+        task1.DueDate = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(task1);
+
+        var task2 = CreateTaskItem("Task Mar");
+        task2.DueDate = new DateTime(2024, 3, 10, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(task2);
+
+        var task3 = CreateTaskItem("Task May");
+        task3.DueDate = new DateTime(2024, 5, 20, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(task3);
+
+        var task4 = CreateTaskItem("Task Sep");
+        task4.DueDate = new DateTime(2024, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(task4);
+
+        var startDate = new DateTime(2024, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endDate = new DateTime(2024, 6, 30, 0, 0, 0, DateTimeKind.Utc);
+        var result = await _repository.GetAllAsync(1, 10, startDate: startDate, endDate: endDate);
+
+        result.Items.Should().HaveCount(2);
+        result.Items[0].Title.Should().Be("Task Mar");
+        result.Items[1].Title.Should().Be("Task May");
+    }
+
+    [Test]
+    public async Task GetAllAsync_WithPagination_ShouldReturnCorrectPage()
+    {
+        for (var i = 1; i <= 5; i++)
+        {
+            var task = CreateTaskItem($"Task {i}");
+            task.CreatedAt = DateTime.UtcNow.AddMinutes(-i);
+            await _repository.CreateAsync(task);
+        }
+
+        var result = await _repository.GetAllAsync(2, 2);
+
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(5);
+        result.TotalPages.Should().Be(3);
+        result.Page.Should().Be(2);
+    }
+
+    [Test]
+    public async Task GetAllAsync_WithAllFilters_ShouldCombineConditions()
+    {
+        var match = CreateTaskItem("Deploy Feature");
+        match.Status = "Pending";
+        match.DueDate = new DateTime(2024, 6, 15, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(match);
+
+        var wrongStatus = CreateTaskItem("Deploy Hotfix");
+        wrongStatus.Status = "Completed";
+        wrongStatus.DueDate = new DateTime(2024, 6, 10, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(wrongStatus);
+
+        var wrongDate = CreateTaskItem("Deploy Old");
+        wrongDate.Status = "Pending";
+        wrongDate.DueDate = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(wrongDate);
+
+        var wrongSearch = CreateTaskItem("Meeting");
+        wrongSearch.Status = "Pending";
+        wrongSearch.DueDate = new DateTime(2024, 6, 20, 0, 0, 0, DateTimeKind.Utc);
+        await _repository.CreateAsync(wrongSearch);
+
+        var startDate = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endDate = new DateTime(2024, 6, 30, 0, 0, 0, DateTimeKind.Utc);
+        var result = await _repository.GetAllAsync(1, 10, search: "Deploy", status: "Pending", startDate: startDate, endDate: endDate);
+
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Title.Should().Be("Deploy Feature");
+    }
+
     private TaskItem CreateTaskItem(string title, string? userId = null) => new()
     {
         Id = Guid.NewGuid(),

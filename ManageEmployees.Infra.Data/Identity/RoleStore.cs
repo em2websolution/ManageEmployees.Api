@@ -27,26 +27,21 @@ namespace ManageEmployees.Infra.Data.Identity
 
         public async Task<IdentityResult> CreateAsync(IdentityRole role, CancellationToken cancellationToken)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            await connection.OpenAsync(cancellationToken);
-
             const string sql = "INSERT INTO Roles (Id, Name, NormalizedName, ConcurrencyStamp) VALUES (@Id, @Name, @NormalizedName, @ConcurrencyStamp)";
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Id", role.Id);
-            command.Parameters.AddWithValue("@Name", (object?)role.Name ?? DBNull.Value);
-            command.Parameters.AddWithValue("@NormalizedName", (object?)role.NormalizedName ?? DBNull.Value);
-            command.Parameters.AddWithValue("@ConcurrencyStamp", (object?)role.ConcurrencyStamp ?? DBNull.Value);
-            await command.ExecuteNonQueryAsync(cancellationToken);
-
-            return IdentityResult.Success;
+            return await ExecuteRoleCommandAsync(sql, role, cancellationToken);
         }
 
         public async Task<IdentityResult> UpdateAsync(IdentityRole role, CancellationToken cancellationToken)
         {
+            const string sql = "UPDATE Roles SET Name = @Name, NormalizedName = @NormalizedName, ConcurrencyStamp = @ConcurrencyStamp WHERE Id = @Id";
+            return await ExecuteRoleCommandAsync(sql, role, cancellationToken);
+        }
+
+        private async Task<IdentityResult> ExecuteRoleCommandAsync(string sql, IdentityRole role, CancellationToken cancellationToken)
+        {
             using var connection = _connectionFactory.CreateConnection();
             await connection.OpenAsync(cancellationToken);
 
-            const string sql = "UPDATE Roles SET Name = @Name, NormalizedName = @NormalizedName, ConcurrencyStamp = @ConcurrencyStamp WHERE Id = @Id";
             using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Id", role.Id);
             command.Parameters.AddWithValue("@Name", (object?)role.Name ?? DBNull.Value);

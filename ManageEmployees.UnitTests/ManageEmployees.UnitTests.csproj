@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ManageEmployees.Api\ManageEmployees.Api.csproj" />
     <ProjectReference Include="..\ManageEmployees.Domain\ManageEmployees.Domain.csproj" />
+    <ProjectReference Include="..\ManageEmployees.Infra.CrossCutting.IoC\ManageEmployees.Infra.CrossCutting.IoC.csproj" />
     <ProjectReference Include="..\ManageEmployees.Services\ManageEmployees.Services.csproj" />
   </ItemGroup>
 

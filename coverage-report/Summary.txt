@@ -1,0 +1,64 @@
+Summary
+  Generated on: 29/04/2026 - 20:44:39
+  Parser: MultiReport (2x OpenCover)
+  Assemblies: 5
+  Classes: 35
+  Files: 35
+  Line coverage: 83.6%
+  Covered lines: 1023
+  Uncovered lines: 200
+  Coverable lines: 1223
+  Total lines: 2234
+  Branch coverage: 75.5% (219 of 290)
+  Covered branches: 219
+  Total branches: 290
+  Method coverage: 95.8% (187 of 195)
+  Full method coverage: 94.3% (184 of 195)
+  Covered methods: 187
+  Fully covered methods: 184
+  Total methods: 195
+
+ManageEmployees.Api                                                                 57.6%
+  ManageEmployees.Api.Controllers.LoginController                                    100%
+  ManageEmployees.Api.Controllers.TasksController                                    100%
+  ManageEmployees.Api.Middlewares.GlobalExceptionHandlerMiddleware                   100%
+  Program                                                                              0%
+
+ManageEmployees.Domain                                                               100%
+  ManageEmployees.Domain.DTO.CreateTaskRequest                                       100%
+  ManageEmployees.Domain.DTO.CreateUser                                              100%
+  ManageEmployees.Domain.DTO.SignInRequest                                           100%
+  ManageEmployees.Domain.DTO.UpdateTaskRequest                                       100%
+  ManageEmployees.Domain.DTO.UpdateUser                                              100%
+  ManageEmployees.Domain.DTO.UserDto                                                 100%
+  ManageEmployees.Domain.Entities.RefreshToken                                       100%
+  ManageEmployees.Domain.Entities.TaskItem                                           100%
+  ManageEmployees.Domain.Entities.User                                               100%
+  ManageEmployees.Domain.Exceptions.BusinessException                                100%
+  ManageEmployees.Domain.Exceptions.NotFoundException                                100%
+  ManageEmployees.Domain.Models.ApiErrorResponse                                     100%
+  ManageEmployees.Domain.Models.Error                                                100%
+  ManageEmployees.Domain.Models.PagedResult<T>                                       100%
+  ManageEmployees.Domain.Models.Token                                                100%
+  ManageEmployees.Domain.TaskItemStatus                                              100%
+
+ManageEmployees.Infra.CrossCutting.IoC                                              98.9%
+  ManageEmployees.Infra.CrossCutting.IoC.Configuration.DependencyInjection           100%
+  ManageEmployees.Infra.CrossCutting.IoC.Configuration.IdentityConfig               98.5%
+  ManageEmployees.Infra.CrossCutting.IoC.Configuration.JwtSecurityExtensionEvents    100%
+
+ManageEmployees.Infra.Data                                                          79.3%
+  ManageEmployees.Infra.Data.Connection.SqlConnectionFactory                         100%
+  ManageEmployees.Infra.Data.DatabaseInitializer                                       0%
+  ManageEmployees.Infra.Data.Identity.RoleStore                                      100%
+  ManageEmployees.Infra.Data.Identity.UserStore                                      100%
+  ManageEmployees.Infra.Data.Repositories.RefreshTokenRepository                     100%
+  ManageEmployees.Infra.Data.Repositories.TaskRepository                             100%
+  ManageEmployees.Infra.Data.Repositories.UserRepository                             100%
+
+ManageEmployees.Services                                                            98.9%
+  ManageEmployees.Services.Services.AuthService                                     96.6%
+  ManageEmployees.Services.Services.TaskService                                      100%
+  ManageEmployees.Services.Services.UserService                                      100%
+  ManageEmployees.Services.Settings.JwtSettings                                      100%
+  ManageEmployees.Services.Settings.LogSettings                                      100%

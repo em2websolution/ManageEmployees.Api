@@ -78,4 +78,18 @@ public class ExceptionsTests
 
         activity.Stop();
     }
+
+    [Test]
+    public void NotFoundException_ShouldSetMessage()
+    {
+        // Act
+        var exception = new NotFoundException("Resource not found");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception.Message, Is.EqualTo("Resource not found"));
+            Assert.That(exception, Is.InstanceOf<BusinessException>());
+        });
+    }
 }

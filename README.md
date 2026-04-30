@@ -14,8 +14,8 @@ ManageEmployees.Domain/                 → Entities, DTOs, Interfaces, Models, 
 ManageEmployees.Services/               → Business logic (AuthService, UserService, TaskService)
 ManageEmployees.Infra.Data/             → ADO.NET repositories, Identity stores, SQL scripts
 ManageEmployees.Infra.CrossCutting.IoC/ → DI registration, Identity config
-ManageEmployees.UnitTests/              → NUnit unit tests (62 tests)
-ManageEmployees.IntegrationTests/       → NUnit integration tests (22 tests)
+ManageEmployees.UnitTests/              → NUnit unit tests (111 tests)
+ManageEmployees.IntegrationTests/       → NUnit integration tests (75 tests)
 ```
 
 ### Key Design Decisions
@@ -222,7 +222,7 @@ All list endpoints support **server-side pagination** (`OFFSET/FETCH NEXT`) with
 dotnet test
 ```
 
-**84 tests** (62 unit + 22 integration), all passing:
+**186 tests** (111 unit + 75 integration), all passing:
 
 ### Unit Tests (ManageEmployees.UnitTests)
 
@@ -233,21 +233,86 @@ dotnet test
 | Services | TaskServiceTests | 10 | CRUD, status validation, not-found errors |
 | Services | UserServiceTests | 15 | Sign-in, sign-up, update, delete, list |
 | Services | AuthServiceTests | 5 | Token generation, refresh swap, removal |
+| Services | UserServiceAdditionalTests | 6 | Edge cases, duplicate email, roles |
+| IoC | DependencyInjectionTests | 10 | All DI registrations verified |
+| IoC | IdentityConfigTests | 7 | JWT options, password config, cookie handler |
+| IoC | JwtSecurityExtensionEventsTests | 2 | Token validation events |
+| API Middleware | GlobalExceptionHandlerMiddlewareTests | 8 | Exception → HTTP status mapping |
 | Domain | ConstantsTests | 2 | Role names, task statuses |
 | Domain | SignInRequestTests | 4 | DTO field validation |
-| Domain | ExceptionsTests | 3 | BusinessException constructors, trace ID |
-| | **Subtotal** | **62** | |
+| Domain | ExceptionsTests | 4 | BusinessException, NotFoundException constructors |
+| Domain | PagedResultTests | 6 | Pagination model |
+| Domain | ApiErrorResponseTests | 4 | Error response model |
+| Data | SqlConnectionFactoryTests | 3 | Connection creation |
+| Settings | LogSettingsTests | 2 | Log middleware |
+| | **Subtotal** | **111** | |
 
 ### Integration Tests (ManageEmployees.IntegrationTests)
 
 | Layer | Test Class | Tests | Scope |
 |-------|------------|:-----:|-------|
-| Data Access | TaskRepositoryTests | 11 | CRUD, ordering, null description, user filtering |
+| Identity | UserStoreTests | 24 | IUserStore, IUserPasswordStore, IUserRoleStore, IUserSecurityStampStore |
+| Identity | RoleStoreTests | 12 | IRoleStore full CRUD + accessors |
+| Configuration | IdentityConfigTests | 5 | DI registration with real config |
+| Data Access | TaskRepositoryTests | 18 | CRUD, filters, pagination, date ranges |
 | Data Access | RefreshTokenRepositoryTests | 5 | Create, get, delete, multiple tokens |
-| Data Access | UserRepositoryTests | 6 | Roles join, ordering, nullable fields, empty list |
-| | **Subtotal** | **22** | |
+| Data Access | UserRepositoryTests | 11 | CRUD, roles join, search, pagination |
+| | **Subtotal** | **75** | |
 
-| | **Total** | **84** | |
+| | **Total** | **186** | |
+
+---
+
+## Code Quality — SonarQube
+
+The project is analyzed with **SonarQube 9.9 LTS Community Edition**.
+
+### Quality Report
+
+| Metric | Result |
+|--------|--------|
+| **Coverage** | **82.0%** |
+| **Bugs** | 0 |
+| **Vulnerabilities** | 0 |
+| **Code Smells** | 0 |
+| **Duplication** | 0.0% |
+| **Security Hotspots Reviewed** | 100% |
+
+### Coverage by Assembly
+
+| Assembly | Coverage |
+|----------|----------|
+| ManageEmployees.Domain | 100% |
+| ManageEmployees.Services | 98.9% |
+| ManageEmployees.Infra.CrossCutting.IoC | 98.9% |
+| ManageEmployees.Infra.Data | 79.3% |
+| ManageEmployees.Api | 57.6% |
+
+> `Program.cs` (startup bootstrap) and `DatabaseInitializer` (one-time schema setup) account for the untested lines. All business logic is at 98%+ coverage.
+
+### Running Analysis
+
+```bash
+# Prerequisites: dotnet-sonarscanner, Java 17+
+dotnet sonarscanner begin \
+  /k:"manage-employees-api" \
+  /d:sonar.host.url="http://localhost:9000" \
+  /d:sonar.token="<YOUR_TOKEN>" \
+  /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" \
+  /d:sonar.exclusions="**/Migrations/**,**/obj/**,**/bin/**"
+
+dotnet build ManageEmployees.sln
+
+dotnet test ManageEmployees.UnitTests/ManageEmployees.UnitTests.csproj \
+  --no-build --collect:"XPlat Code Coverage" \
+  -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+dotnet test ManageEmployees.IntegrationTests/ManageEmployees.IntegrationTests.csproj \
+  --no-build --settings ManageEmployees.IntegrationTests/coverage.runsettings \
+  --collect:"XPlat Code Coverage"
+
+dotnet sonarscanner end /d:sonar.token="<YOUR_TOKEN>"
+```
 
 ---
 

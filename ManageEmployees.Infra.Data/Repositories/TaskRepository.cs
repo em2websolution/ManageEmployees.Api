@@ -121,11 +121,7 @@ namespace ManageEmployees.Infra.Data.Repositories
                 VALUES (@Id, @Title, @Description, @Status, @DueDate, @UserId, @CreatedAt)";
 
             using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Id", task.Id);
-            command.Parameters.AddWithValue("@Title", task.Title);
-            command.Parameters.AddWithValue("@Description", (object?)task.Description ?? DBNull.Value);
-            command.Parameters.AddWithValue("@Status", task.Status);
-            command.Parameters.AddWithValue("@DueDate", task.DueDate);
+            AddTaskParameters(command, task);
             command.Parameters.AddWithValue("@UserId", task.UserId);
             command.Parameters.AddWithValue("@CreatedAt", task.CreatedAt);
             await command.ExecuteNonQueryAsync();
@@ -143,11 +139,7 @@ namespace ManageEmployees.Infra.Data.Repositories
                 WHERE Id = @Id";
 
             using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Id", task.Id);
-            command.Parameters.AddWithValue("@Title", task.Title);
-            command.Parameters.AddWithValue("@Description", (object?)task.Description ?? DBNull.Value);
-            command.Parameters.AddWithValue("@Status", task.Status);
-            command.Parameters.AddWithValue("@DueDate", task.DueDate);
+            AddTaskParameters(command, task);
             await command.ExecuteNonQueryAsync();
         }
 
@@ -160,6 +152,15 @@ namespace ManageEmployees.Infra.Data.Repositories
             command.Parameters.AddWithValue("@Id", id);
             var rows = await command.ExecuteNonQueryAsync();
             return rows > 0;
+        }
+
+        private static void AddTaskParameters(SqlCommand command, TaskItem task)
+        {
+            command.Parameters.AddWithValue("@Id", task.Id);
+            command.Parameters.AddWithValue("@Title", task.Title);
+            command.Parameters.AddWithValue("@Description", (object?)task.Description ?? DBNull.Value);
+            command.Parameters.AddWithValue("@Status", task.Status);
+            command.Parameters.AddWithValue("@DueDate", task.DueDate);
         }
 
         private static void AddFilterParameters(SqlCommand command, string? search, string? status, DateTime? startDate, DateTime? endDate)

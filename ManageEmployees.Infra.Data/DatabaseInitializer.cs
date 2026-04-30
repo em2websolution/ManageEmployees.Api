@@ -48,7 +48,7 @@ namespace ManageEmployees.Infra.Data
             await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
-            command.CommandText = $"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @dbName) CREATE DATABASE [{databaseName.Replace("]", "]]")}]";
+            command.CommandText = "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = @dbName) BEGIN DECLARE @sql NVARCHAR(500) = N'CREATE DATABASE ' + QUOTENAME(@dbName); EXEC sp_executesql @sql; END";
             command.Parameters.AddWithValue("@dbName", databaseName);
             await command.ExecuteNonQueryAsync();
         }

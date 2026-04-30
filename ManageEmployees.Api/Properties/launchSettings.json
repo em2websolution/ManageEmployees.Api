@@ -4,7 +4,8 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionStrings__DBConnection": "Server=localhost,1433;Database=ManageEmployees;User Id=sa;Password=SqlServer2024!;TrustServerCertificate=True;Encrypt=False;"
       },
       "applicationUrl": "https://localhost:64715;http://localhost:64716"
     },

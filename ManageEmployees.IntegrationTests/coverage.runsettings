@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>opencover</Format>
+          <IncludeDirectory>../ManageEmployees.Infra.Data/bin/Debug/net8.0/</IncludeDirectory>
+          <Include>[ManageEmployees.Infra.Data]*,[ManageEmployees.Domain]*,[ManageEmployees.Infra.CrossCutting.IoC]*</Include>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

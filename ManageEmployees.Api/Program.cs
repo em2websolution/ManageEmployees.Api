@@ -74,7 +74,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
-        builder => { builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition"); });
+        policy =>
+        {
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+                ?? ["http://localhost:3000"];
+            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition");
+        });
 });
 
 var app = builder.Build();

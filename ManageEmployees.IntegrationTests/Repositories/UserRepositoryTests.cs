@@ -89,6 +89,86 @@ public class UserRepositoryTests
         result.Items[0].PhoneNumber.Should().BeNull();
     }
 
+    [Test]
+    public async Task GetAllWithRolesAsync_WithSearchFilter_ShouldFilterByName()
+    {
+        await SeedUserAsync("alice@test.com", "Alice", "Wonder");
+        await SeedUserAsync("bob@test.com", "Bob", "Builder");
+        await SeedUserAsync("charlie@test.com", "Charlie", "Brown");
+
+        var result = await _repository.GetAllWithRolesAsync(1, 100, search: "Alice");
+
+        result.Items.Should().HaveCount(1);
+        result.Items[0].FirstName.Should().Be("Alice");
+    }
+
+    [Test]
+    public async Task GetAllWithRolesAsync_WithSearchFilter_ShouldFilterByEmail()
+    {
+        await SeedUserAsync("alice@test.com", "Alice", "Wonder");
+        await SeedUserAsync("bob@company.com", "Bob", "Builder");
+
+        var result = await _repository.GetAllWithRolesAsync(1, 100, search: "company.com");
+
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Email.Should().Be("bob@company.com");
+    }
+
+    [Test]
+    public async Task GetAllWithRolesAsync_WithRoleFilter_ShouldFilterByRole()
+    {
+        var userId1 = await SeedUserAsync("admin@test.com", "Admin", "User");
+        var adminRoleId = await SeedRoleAsync("Administrator");
+        await AssignRoleAsync(userId1, adminRoleId);
+
+        var userId2 = await SeedUserAsync("emp@test.com", "Emp", "User");
+        var empRoleId = await SeedRoleAsync("Employee");
+        await AssignRoleAsync(userId2, empRoleId);
+
+        var result = await _repository.GetAllWithRolesAsync(1, 100, role: "Administrator");
+
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Email.Should().Be("admin@test.com");
+        result.Items[0].Role.Should().Be("Administrator");
+    }
+
+    [Test]
+    public async Task GetAllWithRolesAsync_WithPagination_ShouldReturnCorrectPage()
+    {
+        await SeedUserAsync("a@test.com", "Alpha", "User");
+        await SeedUserAsync("b@test.com", "Bravo", "User");
+        await SeedUserAsync("c@test.com", "Charlie", "User");
+        await SeedUserAsync("d@test.com", "Delta", "User");
+        await SeedUserAsync("e@test.com", "Echo", "User");
+
+        var result = await _repository.GetAllWithRolesAsync(2, 2);
+
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(5);
+        result.TotalPages.Should().Be(3);
+        result.Page.Should().Be(2);
+    }
+
+    [Test]
+    public async Task GetAllWithRolesAsync_WithSearchAndRoleFilter_ShouldCombineConditions()
+    {
+        var userId1 = await SeedUserAsync("john.admin@test.com", "John", "Admin");
+        var adminRoleId = await SeedRoleAsync("Administrator");
+        await AssignRoleAsync(userId1, adminRoleId);
+
+        var userId2 = await SeedUserAsync("john.emp@test.com", "John", "Employee");
+        var empRoleId = await SeedRoleAsync("Employee");
+        await AssignRoleAsync(userId2, empRoleId);
+
+        await SeedUserAsync("jane.admin@test.com", "Jane", "Admin");
+
+        var result = await _repository.GetAllWithRolesAsync(1, 100, search: "John", role: "Administrator");
+
+        result.Items.Should().HaveCount(1);
+        result.Items[0].Email.Should().Be("john.admin@test.com");
+        result.Items[0].Role.Should().Be("Administrator");
+    }
+
     private static async Task<string> SeedUserAsync(string email, string firstName, string lastName,
         string docNumber = "12345678900", string? phoneNumber = null)
     {
